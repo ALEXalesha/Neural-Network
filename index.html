@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Network Lab</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+    --border: #30363d; --text: #e6edf3; --muted: #8b949e;
+    --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+    --purple: #bc8cff; --orange: #d29922; --pink: #ff79c6;
+  }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; display:flex; min-height:100vh; }
+
+  /* SIDEBAR */
+  nav { width:220px; background:var(--bg2); border-right:1px solid var(--border); padding:20px 0; position:fixed; height:100vh; overflow-y:auto; }
+  nav .logo { padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  nav .logo h1 { font-size:16px; font-weight:700; color:var(--accent); }
+  nav .logo p  { font-size:11px; color:var(--muted); margin-top:2px; }
+  nav .device  { margin:8px 20px; padding:6px 10px; background:var(--bg3); border-radius:6px; font-size:11px; color:var(--muted); }
+  nav a { display:flex; align-items:center; gap:10px; padding:10px 20px; color:var(--muted); text-decoration:none; font-size:14px; cursor:pointer; transition:.15s; border-left:3px solid transparent; }
+  nav a:hover { color:var(--text); background:var(--bg3); }
+  nav a.active { color:var(--accent); border-left-color:var(--accent); background:rgba(88,166,255,.08); }
+  nav .section { padding:12px 20px 4px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  nav .status-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; }
+  nav .status-dot.ok { background:var(--green); }
+
+  /* MAIN */
+  main { margin-left:220px; flex:1; padding:30px; max-width:960px; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  h2 { font-size:22px; font-weight:700; margin-bottom:6px; }
+  .subtitle { color:var(--muted); font-size:14px; margin-bottom:24px; }
+
+  /* CARDS */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+  .card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:20px; cursor:pointer; transition:.2s; }
+  .card:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .card .icon { font-size:28px; margin-bottom:10px; }
+  .card h3 { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .card p  { font-size:12px; color:var(--muted); }
+  .card .badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px; margin-top:8px; background:rgba(63,185,80,.15); color:var(--green); }
+
+  /* PANELS */
+  .panel { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:24px; margin-bottom:20px; }
+  .panel h3 { font-size:15px; font-weight:600; margin-bottom:16px; color:var(--accent); }
+
+  /* INPUTS */
+  textarea, input[type=text], input[type=number], select {
+    background:var(--bg3); border:1px solid var(--border); color:var(--text);
+    border-radius:6px; padding:10px 14px; font-size:14px; font-family:inherit;
+    width:100%; resize:vertical; outline:none; transition:.15s;
+  }
+  textarea:focus, input:focus, select:focus { border-color:var(--accent); }
+  textarea { min-height:80px; }
+
+  .row { display:flex; gap:12px; align-items:flex-end; margin-bottom:12px; }
+  .row label { font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+  .col { flex:1; }
+
+  button {
+    background:var(--accent); color:#000; border:none; border-radius:6px;
+    padding:10px 20px; font-size:14px; font-weight:600; cursor:pointer; transition:.15s;
+    white-space:nowrap;
+  }
+  button:hover { opacity:.85; }
+  button.secondary { background:var(--bg3); color:var(--text); border:1px solid var(--border); }
+  button.secondary:hover { border-color:var(--accent); }
+  button.danger { background:var(--red); color:#fff; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+
+  /* OUTPUT */
+  .output {
+    background:var(--bg); border:1px solid var(--border); border-radius:6px;
+    padding:14px; min-height:60px; font-size:14px; line-height:1.7;
+    white-space:pre-wrap; word-break:break-word; margin-top:12px;
+  }
+  .output.stream { font-family:'Cascadia Code','Fira Code',monospace; font-size:13px; }
+  .output .cursor { display:inline-block; width:8px; height:14px; background:var(--accent); animation:blink .8s infinite; vertical-align:text-bottom; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* SENTIMENT BARS */
+  .bars { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  .bar-row { display:flex; align-items:center; gap:10px; }
+  .bar-label { width:110px; font-size:13px; }
+  .bar-track { flex:1; background:var(--bg3); border-radius:4px; height:8px; }
+  .bar-fill  { height:100%; border-radius:4px; transition:.4s; }
+  .bar-pct   { width:45px; text-align:right; font-size:12px; color:var(--muted); }
+
+  /* MNIST CANVAS */
+  .canvas-wrap { display:flex; gap:20px; align-items:flex-start; }
+  #canvas { background:#000; border-radius:8px; cursor:crosshair; border:2px solid var(--border); touch-action:none; }
+  .probs-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+  .prob-cell { background:var(--bg3); border-radius:6px; padding:8px 4px; text-align:center; font-size:12px; }
+  .prob-cell .num { font-size:18px; font-weight:700; }
+  .prob-cell .pct { color:var(--muted); font-size:11px; }
+  .prob-cell.top { background:rgba(88,166,255,.15); border:1px solid var(--accent); }
+  .prediction-big { font-size:64px; font-weight:900; color:var(--accent); text-align:center; line-height:1; margin:8px 0; }
+  .conf-text { text-align:center; color:var(--muted); font-size:13px; }
+
+  /* TRANSLATOR */
+  .tr-wrap { display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:start; }
+  .tr-swap { align-self:center; padding:10px; }
+  .lang-label { font-size:11px; color:var(--muted); margin-bottom:4px; }
+
+  /* CHAT */
+  .chat-box { height:400px; overflow-y:auto; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; margin-bottom:12px; }
+  .msg { max-width:80%; padding:10px 14px; border-radius:10px; font-size:14px; line-height:1.6; }
+  .msg.user { background:var(--accent); color:#000; align-self:flex-end; border-radius:10px 10px 2px 10px; }
+  .msg.bot  { background:var(--bg3); align-self:flex-start; border-radius:10px 10px 10px 2px; white-space:pre-wrap; }
+  .chat-input-row { display:flex; gap:8px; }
+  .chat-input-row input { flex:1; }
+
+  /* GAN */
+  .gan-digit-btns { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .digit-btn { width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:var(--bg3); color:var(--muted); font-size:15px; font-weight:700; cursor:pointer; transition:.15s; }
+  .digit-btn:hover  { border-color:var(--accent); color:var(--text); }
+  .digit-btn.active { background:rgba(88,166,255,.2); border-color:var(--accent); color:var(--accent); }
+  .gan-grid { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .gan-grid img { width:100px; height:100px; border-radius:8px; border:1px solid var(--border); image-rendering:auto; cursor:pointer; transition:.15s; }
+  .gan-grid img:hover { border-color:var(--accent); transform:scale(1.05); }
+
+  /* HOME STATS */
+  .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+  .stat { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:18px; }
+  .stat .val { font-size:28px; font-weight:700; color:var(--accent); }
+  .stat .lbl { font-size:12px; color:var(--muted); margin-top:2px; }
+
+  /* MISC */
+  .tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; margin-right:4px; }
+  .tag.en { background:rgba(88,166,255,.15); color:var(--accent); }
+  .tag.ru { background:rgba(188,140,255,.15); color:var(--purple); }
+  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+  .loading { color:var(--muted); font-style:italic; }
+  .error { color:var(--red); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav>
+  <div class="logo">
+    <h1>🧠 Neural Lab</h1>
+    <p>Локальный AI сервер</p>
+  </div>
+  <div class="device" id="device-info">Загрузка...</div>
+
+  <div class="section">Главная</div>
+  <a onclick="show('home')" id="nav-home" class="active">🏠 Обзор</a>
+
+  <div class="section">Модели</div>
+  <a onclick="show('gpt')">
+    <span class="status-dot" id="dot-gpt"></span>Наш GPT
+  </a>
+  <a onclick="show('mnist')">
+    <span class="status-dot" id="dot-mnist"></span>MNIST
+  </a>
+  <a onclick="show('sentiment')">
+    <span class="status-dot" id="dot-sentiment"></span>Сентимент
+  </a>
+  <a onclick="show('translator')">
+    <span class="status-dot" id="dot-translator"></span>Переводчик
+  </a>
+  <a onclick="show('math')">
+    <span class="status-dot ok"></span>Математика
+  </a>
+  <a onclick="show('gan')">
+    <span class="status-dot" id="dot-gan"></span>GAN генерация
+  </a>
+
+  <div class="section">Ассистент</div>
+  <a onclick="show('chat')">💬 GPT чат</a>
+  <a href="http://localhost:5001" target="_blank" style="color:var(--purple)">🤖 Smart Assistant ↗</a>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <h2>Neural Network Lab</h2>
+  <p class="subtitle">Все нейросети, обученные с нуля — в одном интерфейсе</p>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="val">8.8M</div><div class="lbl">параметров в GPT</div></div>
+    <div class="stat"><div class="val">99.7%</div><div class="lbl">точность MNIST</div></div>
+    <div class="stat"><div class="val">6</div><div class="lbl">обученных моделей</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card" onclick="show('gpt')">
+      <div class="icon">✍️</div>
+      <h3>Наш GPT</h3>
+      <p>Генерация текста на русском и английском</p>
+      <span class="badge">8.8M параметров</span>
+    </div>
+    <div class="card" onclick="show('mnist')">
+      <div class="icon">✏️</div>
+      <h3>MNIST</h3>
+      <p>Нарисуй цифру — модель угадает</p>
+      <span class="badge">99.7% точность</span>
+    </div>
+    <div class="card" onclick="show('sentiment')">
+      <div class="icon">💬</div>
+      <h3>Сентимент</h3>
+      <p>Анализ тональности отзывов</p>
+      <span class="badge">LSTM</span>
+    </div>
+    <div class="card" onclick="show('translator')">
+      <div class="icon">🌐</div>
+      <h3>Переводчик</h3>
+      <p>EN → RU перевод через Transformer</p>
+      <span class="badge">Tatoeba corpus</span>
+    </div>
+    <div class="card" onclick="show('math')">
+      <div class="icon">🔢</div>
+      <h3>Математика</h3>
+      <p>Вычисление арифметических выражений</p>
+      <span class="badge">Калькулятор</span>
+    </div>
+    <div class="card" onclick="show('gan')">
+      <div class="icon">🎨</div>
+      <h3>GAN</h3>
+      <p>Генерация цифр через нейросеть</p>
+      <span class="badge">DCGAN</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Как запустить</h3>
+    <div style="font-family:monospace;font-size:13px;color:var(--muted);line-height:2">
+      <span style="color:var(--green)">#</span> Этот сайт<br>
+      python web_app.py → http://localhost:5000<br><br>
+      <span style="color:var(--green)">#</span> Умный ассистент (тяжёлые LLM)<br>
+      python smart_assistant.py<br><br>
+      <span style="color:var(--green)">#</span> Меню всех скриптов<br>
+      python menu.py
+    </div>
+  </div>
+</div>
+
+<!-- GPT -->
+<div class="page" id="page-gpt">
+  <h2>Наш GPT</h2>
+  <p class="subtitle">Обучен на русской и английской Википедии (8.8M параметров, BPE токенизатор)</p>
+
+  <div class="panel">
+    <h3>Генерация текста</h3>
+    <div class="row">
+      <div class="col">
+        <label>Начало текста (seed)</label>
+        <input type="text" id="gpt-seed" value="[EN] Artificial intelligence" placeholder="[EN] или [RU] ...">
+      </div>
+    </div>
+    <div class="hint">
+      <span class="tag en">[EN]</span> для английского &nbsp;
+      <span class="tag ru">[RU]</span> для русского
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="col">
+        <label>Длина (токенов)</label>
+        <input type="number" id="gpt-length" value="200" min="50" max="500">
+      </div>
+      <div class="col">
+        <label>Температура (креативность)</label>
+        <input type="number" id="gpt-temp" value="0.8" min="0.1" max="2" step="0.1">
+      </div>
+      <button onclick="runGPT()" id="gpt-btn">Генерировать</button>
+      <button onclick="stopGPT()" id="gpt-stop-btn" class="danger" style="display:none">■ Стоп</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <button class="secondary" onclick="setSeed('[EN] The history of')">EN история</button>
+      <button class="secondary" onclick="setSeed('[EN] Physics is')">EN физика</button>
+      <button class="secondary" onclick="setSeed('[RU] Нейронные сети')">RU нейросети</button>
+      <button class="secondary" onclick="setSeed('[RU] Москва — столица')">RU Москва</button>
+    </div>
+    <div class="output stream" id="gpt-output">Нажми «Генерировать»...</div>
+  </div>
+</div>
+
+<!-- MNIST -->
+<div class="page" id="page-mnist">
+  <h2>Распознавание цифр</h2>
+  <p class="subtitle">Нарисуй цифру мышкой — ResNet угадает с точностью 99.7%</p>
+
+  <div class="panel">
+    <div class="canvas-wrap">
+      <div>
+        <canvas id="canvas" width="280" height="280"></canvas>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="clearCanvas()" class="secondary">Очистить</button>
+          <button onclick="predictDigit()">Распознать</button>
+        </div>
+        <p class="hint" style="margin-top:8px">Рисуй мышкой или пальцем</p>
+      </div>
+      <div style="flex:1">
+        <div class="prediction-big" id="pred-digit">?</div>
+        <div class="conf-text" id="pred-conf"></div>
+        <div style="margin-top:8px;font-size:11px;color:#888">Что видит модель:</div>
+        <img id="debug-img" style="width:56px;height:56px;image-rendering:pixelated;border:1px solid #333;margin-top:4px" />
+        <div class="probs-grid" id="prob-grid" style="margin-top:16px">
+          <div class="prob-cell"><div class="num">0</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">1</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">2</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">3</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">4</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">5</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">6</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">7</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">8</div><div class="pct">—</div></div>
+          <div class="prob-cell"><div class="num">9</div><div class="pct">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SENTIMENT -->
+<div class="page" id="page-sentiment">
+  <h2>Анализ тональности</h2>
+  <p class="subtitle">Bi-LSTM определяет: позитивный / нейтральный / негативный отзыв</p>
+
+  <div class="panel">
+    <h3>Введи текст отзыва</h3>
+    <textarea id="sent-text" placeholder="Введи отзыв на русском языке...">отличный товар очень доволен покупкой</textarea>
+    <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap">
+      <button class="secondary" onclick="setSentText('отличный товар очень доволен покупкой рекомендую')">Позитив</button>
+      <button class="secondary" onclick="setSentText('ужасное качество товар сломался через день')">Негатив</button>
+      <button class="secondary" onclick="setSentText('нормальный товар ничего особенного пришло в срок')">Нейтрал</button>
+    </div>
+    <button onclick="runSentiment()">Анализировать</button>
+
+    <div id="sent-result" style="display:none;margin-top:20px">
+      <div style="font-size:48px;text-align:center" id="sent-emoji"></div>
+      <div style="font-size:20px;font-weight:700;text-align:center;margin:8px 0" id="sent-label"></div>
+      <div class="bars" id="sent-bars"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSLATOR -->
+<div class="page" id="page-translator">
+  <h2 id="tr-title">Переводчик EN → RU</h2>
+  <p class="subtitle">Transformer обучен на корпусе Tatoeba (100k пар предложений)</p>
+
+  <div class="panel">
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <button id="tr-btn-en2ru" class="primary" onclick="setDirection('en2ru')">🇬🇧 EN → RU 🇷🇺</button>
+      <button id="tr-btn-ru2en" class="secondary" onclick="setDirection('ru2en')">🇷🇺 RU → EN 🇬🇧</button>
+    </div>
+    <div class="tr-wrap">
+      <div>
+        <div class="lang-label" id="tr-src-label">🇬🇧 Английский</div>
+        <textarea id="tr-input" placeholder="Enter English text..." rows="4">The cat sat on the mat.</textarea>
+      </div>
+      <div>
+        <button class="secondary tr-swap" onclick="translateText()">→</button>
+      </div>
+      <div>
+        <div class="lang-label" id="tr-tgt-label">🇷🇺 Русский</div>
+        <div class="output" id="tr-output" style="min-height:90px">Нажми → для перевода</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="secondary" onclick="setTr('The cat sat on the mat.')">Пример 1</button>
+      <button class="secondary" onclick="setTr('I love machine learning.')">Пример 2</button>
+      <button class="secondary" onclick="setTr('The weather is nice today.')">Пример 3</button>
+      <button class="secondary" onclick="setTr('Where is the nearest hospital?')">Пример 4</button>
+    </div>
+  </div>
+</div>
+
+<!-- MATH -->
+<div class="page" id="page-math">
+  <h2>Математика</h2>
+  <p class="subtitle">Вычисление арифметических выражений</p>
+
+  <div class="panel">
+    <h3>Введи выражение</h3>
+    <div class="row">
+      <div class="col">
+        <input type="text" id="math-input" placeholder="2 + 2 * (10 - 3)" value="(15 + 7) * 3 - 100 / 4">
+      </div>
+      <button onclick="solveMath()">=</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="secondary" onclick="setMath('(2 + 3) * 4')">Пример 1</button>
+      <button class="secondary" onclick="setMath('100 / 7')">Пример 2</button>
+      <button class="secondary" onclick="setMath('3.14 * 5 * 5')">Площадь круга</button>
+      <button class="secondary" onclick="setMath('2**10')">2^10</button>
+    </div>
+    <div class="output" id="math-output" style="font-size:28px;font-weight:700;text-align:center;padding:20px">
+      результат появится здесь
+    </div>
+  </div>
+</div>
+
+<!-- GAN -->
+<div class="page" id="page-gan">
+  <h2>GAN — Генерация цифр</h2>
+  <p class="subtitle">Conditional DCGAN — выбери цифру или генерируй случайно</p>
+
+  <div class="panel">
+    <div style="margin-bottom:6px;font-size:13px;color:var(--muted)">Выбери цифру (или оставь «?» для случайной):</div>
+    <div class="gan-digit-btns">
+      <button class="digit-btn active" data-digit="-1" onclick="selectDigit(-1,this)">?</button>
+      <button class="digit-btn" data-digit="0"  onclick="selectDigit(0,this)">0</button>
+      <button class="digit-btn" data-digit="1"  onclick="selectDigit(1,this)">1</button>
+      <button class="digit-btn" data-digit="2"  onclick="selectDigit(2,this)">2</button>
+      <button class="digit-btn" data-digit="3"  onclick="selectDigit(3,this)">3</button>
+      <button class="digit-btn" data-digit="4"  onclick="selectDigit(4,this)">4</button>
+      <button class="digit-btn" data-digit="5"  onclick="selectDigit(5,this)">5</button>
+      <button class="digit-btn" data-digit="6"  onclick="selectDigit(6,this)">6</button>
+      <button class="digit-btn" data-digit="7"  onclick="selectDigit(7,this)">7</button>
+      <button class="digit-btn" data-digit="8"  onclick="selectDigit(8,this)">8</button>
+      <button class="digit-btn" data-digit="9"  onclick="selectDigit(9,this)">9</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="genGAN(1)">Генерировать 1</button>
+      <button class="secondary" onclick="genGAN(8)">Генерировать 8</button>
+      <button class="secondary" onclick="genGAN(16)">Генерировать 16</button>
+      <span id="gan-status" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+    <div class="gan-grid" id="gan-grid"></div>
+    <p class="hint" style="margin-top:10px">⚠️ Если после удаления модель не работает — запусти <b>python gan.py</b> чтобы переобучить (≈10 мин)</p>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="page" id="page-chat">
+  <h2>GPT Чат</h2>
+  <p class="subtitle">Общение с нашим обученным GPT. Используй [EN] или [RU] для выбора языка.</p>
+
+  <div class="panel">
+    <div class="chat-box" id="chat-box">
+      <div class="msg bot">Привет! Я GPT, обученный на Википедии. Напиши что-нибудь, и я продолжу текст.<br><br>Начни с <b>[EN]</b> для английского или <b>[RU]</b> для русского.</div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="[EN] Tell me about... или [RU] Расскажи о..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()" id="chat-btn">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<!-- CODER TEAM (перенесён в Smart Assistant) -->
+<div class="page" id="page-coder-team" style="display:none!important">
+  <h2>🤖 Coder Team</h2>
+  <p class="subtitle">4 нейросети работают в команде: Writer → Reviewer → Fixer → Refiner</p>
+
+  <div class="panel">
+    <h3>Команда агентов</h3>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0">
+      <div class="card" id="agent-writer">
+        <div class="icon">✍️</div>
+        <h3>Writer</h3>
+        <p>DeepSeek-Coder<br>Пишет первичный код</p>
+      </div>
+      <div class="card" id="agent-reviewer">
+        <div class="icon">🔍</div>
+        <h3>Reviewer</h3>
+        <p>DeepSeek-R1<br>Находит баги</p>
+      </div>
+      <div class="card" id="agent-fixer">
+        <div class="icon">🔧</div>
+        <h3>Fixer</h3>
+        <p>DeepSeek-Coder<br>Исправляет ошибки</p>
+      </div>
+      <div class="card" id="agent-refiner">
+        <div class="icon">✨</div>
+        <h3>Refiner</h3>
+        <p>Qwen2.5<br>Полирует и улучшает</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Задача</h3>
+    <div class="row">
+      <textarea id="team-task" placeholder="Опишите задачу на русском или английском, например:&#10;Напиши парсер новостей на Python&#10;Write a REST API with Flask&#10;Создай класс для работы с базой данных SQLite" style="min-height:100px"></textarea>
+    </div>
+    <button onclick="runCoderTeam()" id="team-btn">🚀 Запустить команду</button>
+    <button onclick="clearTeam()" style="background:var(--bg3);color:var(--muted);margin-left:8px">Очистить</button>
+  </div>
+
+  <div class="panel" id="team-log-panel" style="display:none">
+    <h3>Лог выполнения</h3>
+    <pre id="team-log" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px;font-size:12px;max-height:400px;overflow-y:auto;white-space:pre-wrap;color:var(--text)"></pre>
+  </div>
+
+  <div class="panel" id="team-result-panel" style="display:none">
+    <h3>Финальный код</h3>
+    <pre id="team-code" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px;font-size:13px;max-height:600px;overflow-y:auto;white-space:pre-wrap;color:#79c0ff"></pre>
+    <button onclick="copyCode()" style="margin-top:12px">📋 Скопировать</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ─── Navigation ───
+function show(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.currentTarget && event.currentTarget.classList.add('active');
+}
+
+// ─── Status ───
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status').then(r => r.json());
+    document.getElementById('device-info').textContent = '⚡ ' + r.device.toUpperCase();
+    for (const [k, v] of Object.entries(r.models)) {
+      const d = document.getElementById('dot-' + k);
+      if (d) d.classList.toggle('ok', v);
+    }
+  } catch(e) {}
+}
+loadStatus();
+
+// ─── GPT ───
+function setSeed(s) { document.getElementById('gpt-seed').value = s; }
+let gptReader = null;
+let gptStop = false;
+
+function stopGPT() {
+  gptStop = true;
+  if (gptReader) { gptReader.cancel(); gptReader = null; }
+  document.getElementById('gpt-stop-btn').style.display = 'none';
+  document.getElementById('gpt-btn').disabled = false;
+}
+
+async function runGPT() {
+  const seed  = document.getElementById('gpt-seed').value;
+  const len   = document.getElementById('gpt-length').value;
+  const temp  = document.getElementById('gpt-temp').value;
+  const out   = document.getElementById('gpt-output');
+  const btn   = document.getElementById('gpt-btn');
+  const stopBtn = document.getElementById('gpt-stop-btn');
+
+  gptStop = false;
+  btn.disabled = true;
+  stopBtn.style.display = 'inline-block';
+  out.innerHTML = '<span class="cursor"></span>';
+  let text = '';
+
+  try {
+    const res = await fetch('/api/gpt/stream', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({seed, length: parseInt(len), temperature: parseFloat(temp)})
+    });
+    gptReader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      if (gptStop) break;
+      const {done, value} = await gptReader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = JSON.parse(line.slice(6));
+        if (d.done) { out.innerHTML = text; break; }
+        text += d.text;
+        out.innerHTML = text + '<span class="cursor"></span>';
+        out.scrollTop = out.scrollHeight;
+      }
+    }
+    out.innerHTML = text;
+    gptReader = null;
+  } catch(e) {
+    if (!gptStop) out.innerHTML = '<span class="error">Ошибка: ' + e + '</span>';
+  }
+  btn.disabled = false;
+  stopBtn.style.display = 'none';
+}
+
+// ─── MNIST Canvas ───
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+ctx.fillStyle = '#000';
+ctx.fillRect(0,0,280,280);
+ctx.strokeStyle = '#fff';
+ctx.lineWidth = 16;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX ?? e.touches[0].clientX) - r.left;
+  const y = (e.clientY ?? e.touches[0].clientY) - r.top;
+  return [x, y];
+}
+canvas.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); const [x,y] = getPos(e); ctx.moveTo(x,y); });
+canvas.addEventListener('mousemove', e => { if (!drawing) return; const [x,y] = getPos(e); ctx.lineTo(x,y); ctx.stroke(); });
+canvas.addEventListener('mouseup',   () => { drawing = false; predictDigit(); });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; ctx.beginPath(); const[x,y]=getPos(e); ctx.moveTo(x,y); });
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!drawing)return; const[x,y]=getPos(e); ctx.lineTo(x,y); ctx.stroke(); });
+canvas.addEventListener('touchend',   e => { e.preventDefault(); drawing=false; predictDigit(); });
+
+function clearCanvas() {
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,280,280);
+  document.getElementById('pred-digit').textContent = '?';
+  document.getElementById('pred-conf').textContent = '';
+  document.querySelectorAll('.prob-cell').forEach(c => { c.classList.remove('top'); c.querySelector('.pct').textContent='—'; });
+}
+
+async function predictDigit() {
+  const img = canvas.toDataURL('image/png');
+  try {
+    const r = await fetch('/api/mnist/predict', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({image: img})
+    }).then(r=>r.json());
+    if (r.error) return;
+    document.getElementById('pred-digit').textContent = r.digit;
+    document.getElementById('pred-conf').textContent  = `Уверенность: ${r.confidence}%`;
+    const cells = document.querySelectorAll('.prob-cell');
+    cells.forEach((c, i) => {
+      c.classList.toggle('top', i === r.digit);
+      c.querySelector('.pct').textContent = r.probs[i] + '%';
+    });
+  } catch(e) {}
+}
+
+// ─── Sentiment ───
+function setSentText(t) { document.getElementById('sent-text').value = t; }
+
+async function runSentiment() {
+  const text = document.getElementById('sent-text').value;
+  const r = await fetch('/api/sentiment/analyze', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text})
+  }).then(r=>r.json());
+
+  document.getElementById('sent-result').style.display = 'block';
+  document.getElementById('sent-emoji').textContent = r.emoji;
+  document.getElementById('sent-label').textContent = r.label;
+
+  const colors = {'негативный':'#f85149','нейтральный':'#d29922','позитивный':'#3fb950'};
+  const bars = document.getElementById('sent-bars');
+  bars.innerHTML = '';
+  for (const [label, pct] of Object.entries(r.scores)) {
+    bars.innerHTML += `
+      <div class="bar-row">
+        <div class="bar-label">${label}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[label]}"></div></div>
+        <div class="bar-pct">${pct}%</div>
+      </div>`;
+  }
+}
+
+// ─── Translator ───
+let trDirection = 'en2ru';
+
+function setDirection(dir) {
+  trDirection = dir;
+  const isEN = dir === 'en2ru';
+  document.getElementById('tr-title').textContent = isEN ? 'Переводчик EN → RU' : 'Переводчик RU → EN';
+  document.getElementById('tr-src-label').textContent = isEN ? '🇬🇧 Английский' : '🇷🇺 Русский';
+  document.getElementById('tr-tgt-label').textContent = isEN ? '🇷🇺 Русский' : '🇬🇧 Английский';
+  document.getElementById('tr-input').placeholder = isEN ? 'Enter English text...' : 'Введите русский текст...';
+  document.getElementById('tr-input').value = '';
+  document.getElementById('tr-output').textContent = 'Нажми → для перевода';
+  document.getElementById('tr-btn-en2ru').className = isEN ? 'primary' : 'secondary';
+  document.getElementById('tr-btn-ru2en').className = isEN ? 'secondary' : 'primary';
+}
+
+function setTr(t) { document.getElementById('tr-input').value = t; }
+
+async function translateText() {
+  const text = document.getElementById('tr-input').value;
+  const out  = document.getElementById('tr-output');
+  out.innerHTML = '<span class="loading">Перевожу...</span>';
+  try {
+    const r = await fetch('/api/translate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text, direction: trDirection})
+    }).then(r=>r.json());
+    out.textContent = r.translation ?? r.error;
+  } catch(e) { out.innerHTML = '<span class="error">Ошибка</span>'; }
+}
+
+// ─── Math ───
+function setMath(e) { document.getElementById('math-input').value = e; }
+
+async function solveMath() {
+  const expr = document.getElementById('math-input').value;
+  const out  = document.getElementById('math-output');
+  const r = await fetch('/api/math/solve', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({expression: expr})
+  }).then(r=>r.json());
+  if (r.error) out.innerHTML = `<span class="error">${r.error}</span>`;
+  else out.innerHTML = `<span style="color:var(--accent)">${expr}</span> = <b>${r.result}</b>`;
+}
+document.getElementById('math-input').addEventListener('keydown', e => { if(e.key==='Enter') solveMath(); });
+
+// ─── GAN ───
+let ganDigit = -1;
+
+function selectDigit(d, btn) {
+  ganDigit = d;
+  document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function genGAN(count = 1) {
+  const grid    = document.getElementById('gan-grid');
+  const status  = document.getElementById('gan-status');
+  const btns    = document.querySelectorAll('.page#page-gan button:not(.digit-btn)');
+
+  btns.forEach(b => b.disabled = true);
+  status.textContent = '⏳ Генерирую...';
+  status.style.color = 'var(--muted)';
+
+  try {
+    const resp = await fetch('/api/gan/generate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({digit: ganDigit, count})
+    });
+    const r = await resp.json();
+
+    if (r.error) {
+      status.textContent = '⚠️ ' + r.error;
+      status.style.color = 'var(--red)';
+      return;
+    }
+
+    grid.innerHTML = '';
+    (r.images || []).forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.title = r.digit === -1 ? 'случайная' : 'цифра ' + r.digit;
+      img.onclick = () => window.open(src);
+      grid.appendChild(img);
+    });
+    status.textContent = `✓ Сгенерировано: ${(r.images||[]).length}`;
+    status.style.color = 'var(--green)';
+  } catch(e) {
+    status.textContent = '⚠️ Ошибка соединения: ' + e.message;
+    status.style.color = 'var(--red)';
+  } finally {
+    btns.forEach(b => b.disabled = false);
+  }
+}
+
+// ─── Chat ───
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const box = document.getElementById('chat-box');
+  box.innerHTML += `<div class="msg user">${msg}</div>`;
+
+  const botDiv = document.createElement('div');
+  botDiv.className = 'msg bot';
+  botDiv.innerHTML = '<span class="cursor"></span>';
+  box.appendChild(botDiv);
+  box.scrollTop = box.scrollHeight;
+
+  document.getElementById('chat-btn').disabled = true;
+  let text = '';
+
+  try {
+    const res = await fetch('/api/gpt/stream', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({seed: msg, length: 200, temperature: 0.8})
+    });
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '', first = true;
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = JSON.parse(line.slice(6));
+        if (d.done) { botDiv.textContent = text; break; }
+        if (first) { text = ''; first = false; }
+        text += d.text;
+        botDiv.innerHTML = text + '<span class="cursor"></span>';
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+    botDiv.textContent = text;
+  } catch(e) {
+    botDiv.innerHTML = '<span class="error">Ошибка подключения</span>';
+  }
+  document.getElementById('chat-btn').disabled = false;
+  box.scrollTop = box.scrollHeight;
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+
+// ─── Coder Team ───
+const agentNames = ['writer','reviewer','fixer','refiner'];
+
+function setAgentActive(name) {
+  agentNames.forEach(a => {
+    const el = document.getElementById('agent-' + a);
+    el.style.borderColor = '';
+    el.style.background = '';
+  });
+  if (name) {
+    const el = document.getElementById('agent-' + name);
+    el.style.borderColor = 'var(--accent)';
+    el.style.background = 'rgba(88,166,255,.1)';
+  }
+}
+
+async function runCoderTeam() {
+  const task = document.getElementById('team-task').value.trim();
+  if (!task) { alert('Введите задачу'); return; }
+
+  const btn = document.getElementById('team-btn');
+  const log = document.getElementById('team-log');
+  const logPanel = document.getElementById('team-log-panel');
+  const resPanel = document.getElementById('team-result-panel');
+  const codeEl = document.getElementById('team-code');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Выполняется...';
+  logPanel.style.display = 'block';
+  resPanel.style.display = 'none';
+  log.textContent = '';
+  setAgentActive(null);
+
+  try {
+    const resp = await fetch('/api/coder_team/run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({task})
+    });
+
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = JSON.parse(line.slice(6));
+        if (d.done) {
+          if (d.code) {
+            codeEl.textContent = d.code;
+            resPanel.style.display = 'block';
+          }
+          setAgentActive(null);
+          break;
+        }
+        if (d.line !== undefined) {
+          // Подсвечиваем активного агента
+          if (d.line.includes('АГЕНТ 1') || d.line.includes('WRITER'))   setAgentActive('writer');
+          if (d.line.includes('АГЕНТ 2') || d.line.includes('REVIEWER')) setAgentActive('reviewer');
+          if (d.line.includes('АГЕНТ 3') || d.line.includes('FIXER'))    setAgentActive('fixer');
+          if (d.line.includes('АГЕНТ 4') || d.line.includes('REFINER'))  setAgentActive('refiner');
+          log.textContent += d.line + '\n';
+          log.scrollTop = log.scrollHeight;
+        }
+      }
+    }
+  } catch(e) {
+    log.textContent += '\nОшибка: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🚀 Запустить команду';
+}
+
+function clearTeam() {
+  document.getElementById('team-task').value = '';
+  document.getElementById('team-log').textContent = '';
+  document.getElementById('team-log-panel').style.display = 'none';
+  document.getElementById('team-result-panel').style.display = 'none';
+  setAgentActive(null);
+}
+
+function copyCode() {
+  const code = document.getElementById('team-code').textContent;
+  navigator.clipboard.writeText(code).then(() => alert('Скопировано!'));
+}
+</script>
+</body>
+</html>

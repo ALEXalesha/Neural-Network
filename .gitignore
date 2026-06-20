@@ -1,0 +1,52 @@
+# ===== Веса моделей / чекпойнты =====
+*.pth
+*.pt
+*.onnx
+*.ckpt
+*.h5
+
+# ===== Исполняемые файлы и артефакты сборки =====
+*.exe
+*.spec
+build/
+dist/
+build_tmp/
+alexgpt_build/
+_MEI*/
+__pycache__/
+*.pyc
+*.pyo
+
+# ===== Датасеты и крупные данные =====
+*.tsv
+*.bz2
+*.csv
+data/
+chats/
+gan_progress/
+.webcache/
+.webdata/
+
+# Сгенерированные токенайзеры (создаются обучающими скриптами)
+bpe_en.json
+bpe_ru.json
+bpe_tokenizer.json
+
+# ===== Картинки / результаты =====
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+
+# ===== Большие текстовые корпуса и выводы =====
+*.txt
+
+# ===== Логи и временные маркеры =====
+*.log
+.deps_ok
+.torch_ok
+
+# ===== Локальные настройки =====
+.claude/
+settings.local.json

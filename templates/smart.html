@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Assistant</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="window.katexReady=true"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+  --border: #30363d; --text: #e6edf3; --muted: #8b949e;
+  --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+  --purple: #bc8cff; --orange: #e3b341; --yellow: #f0e68c;
+}
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; height:100vh; display:flex; flex-direction:column; }
+
+/* TOP BAR */
+header { background:var(--bg2); border-bottom:1px solid var(--border); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+header h1 { font-size:16px; font-weight:700; color:var(--accent); }
+header .info { font-size:12px; color:var(--muted); }
+.device-badge { background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:11px; }
+
+/* MODEL SELECTOR */
+.model-bar { background:var(--bg2); border-bottom:1px solid var(--border); padding:8px 20px; display:flex; align-items:center; gap:8px; flex-shrink:0; overflow-x:auto; }
+.model-btn {
+  background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+  border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer;
+  white-space:nowrap; transition:.15s;
+}
+.model-btn:hover { border-color:var(--accent); color:var(--text); }
+.model-btn.active { background:rgba(88,166,255,.15); border-color:var(--accent); color:var(--accent); }
+.model-btn.cached::after { content:'✓'; margin-left:4px; color:var(--green); font-size:10px; }
+.model-label { font-size:11px; color:var(--muted); white-space:nowrap; }
+
+/* CHAT */
+.chat-container { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
+.msg-wrap { display:flex; flex-direction:column; gap:4px; }
+.msg-wrap.user { align-items:flex-end; }
+.msg-wrap.bot  { align-items:flex-start; }
+.msg-meta { font-size:11px; color:var(--muted); padding:0 4px; }
+.msg {
+  max-width:72%; padding:12px 16px; border-radius:12px; font-size:14px;
+  line-height:1.7; word-break:break-word;
+}
+.msg.user { background:var(--accent); color:#000; border-radius:12px 12px 2px 12px; }
+.msg.bot  { background:var(--bg2); border:1px solid var(--border); border-radius:12px 12px 12px 2px; white-space:pre-wrap; }
+.msg.status { background:transparent; border:1px dashed var(--border); color:var(--muted); font-size:13px; font-style:italic; border-radius:8px; }
+.msg.error { background:rgba(248,81,73,.1); border:1px solid var(--red); color:var(--red); }
+
+/* Thinking block */
+.think-block { background:var(--bg3); border-left:3px solid var(--purple); padding:10px 14px; margin:8px 0; border-radius:0 6px 6px 0; font-size:12px; color:var(--muted); }
+.think-toggle { color:var(--purple); cursor:pointer; font-size:12px; user-select:none; }
+
+/* Code blocks */
+.msg.bot pre { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:12px; overflow-x:auto; font-size:12px; margin:8px 0; }
+.msg.bot code { font-family:'Cascadia Code','Fira Code',monospace; }
+.msg.bot p { margin-bottom:6px; }
+
+/* Generated image */
+.gen-image { max-width:400px; border-radius:10px; border:1px solid var(--border); margin-top:8px; }
+
+/* Upload preview */
+.upload-preview { max-height:120px; border-radius:8px; border:1px solid var(--border); margin-bottom:8px; }
+
+/* INPUT AREA */
+.input-area { background:var(--bg2); border-top:1px solid var(--border); padding:16px 20px; flex-shrink:0; }
+.input-row { display:flex; gap:10px; align-items:flex-end; }
+.input-box {
+  flex:1; background:var(--bg3); border:1px solid var(--border); color:var(--text);
+  border-radius:10px; padding:12px 14px; font-size:14px; font-family:inherit;
+  resize:none; outline:none; max-height:120px; overflow-y:auto; transition:.15s;
+  line-height:1.5;
+}
+.input-box:focus { border-color:var(--accent); }
+.send-btn {
+  background:var(--accent); color:#000; border:none; border-radius:10px;
+  width:42px; height:42px; cursor:pointer; font-size:18px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; transition:.15s;
+}
+.send-btn:hover { opacity:.85; }
+.send-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+.toolbar { display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap; }
+.tool-btn {
+  background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+  border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer; transition:.15s;
+}
+.tool-btn:hover { border-color:var(--accent); color:var(--text); }
+.draw-indicator { font-size:12px; color:var(--orange); padding:4px 10px; background:rgba(227,179,65,.1); border:1px solid rgba(227,179,65,.3); border-radius:6px; }
+.img-indicator  { font-size:12px; color:var(--green); padding:4px 10px; background:rgba(63,185,80,.1); border:1px solid rgba(63,185,80,.3); border-radius:6px; cursor:pointer; }
+
+/* LOADING DOTS */
+.typing { display:flex; gap:4px; padding:4px 0; }
+.typing span { width:6px; height:6px; background:var(--muted); border-radius:50%; animation:bounce .8s infinite; }
+.typing span:nth-child(2) { animation-delay:.15s; }
+.typing span:nth-child(3) { animation-delay:.3s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+/* CURRENT MODEL badge */
+.current-model { font-size:11px; background:rgba(88,166,255,.1); color:var(--accent); border:1px solid rgba(88,166,255,.3); border-radius:4px; padding:2px 8px; }
+
+/* Markdown-like rendering */
+strong { font-weight:700; }
+em { font-style:italic; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 Smart Assistant</h1>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button onclick="newChat()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer">✏️ Новый чат</button>
+    <button onclick="toggleHistory()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer" id="history-btn">🕐 История</button>
+    <button onclick="toggleModelsPanel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer" title="Список нейросетей">📋 Модели</button>
+    <span id="current-model-badge" class="current-model" style="display:none"></span>
+    <span class="device-badge" id="device-badge">загрузка...</span>
+    <a href="/logs" target="_blank" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:12px;text-decoration:none">📋 Логи</a>
+    <a href="http://localhost:5000" style="font-size:12px;color:var(--muted);text-decoration:none" target="_blank">↗ Лаборатория</a>
+  </div>
+</header>
+
+<!-- ПАНЕЛЬ ИСТОРИИ -->
+<div id="history-panel" style="display:none;position:fixed;top:53px;right:0;width:280px;height:calc(100vh - 53px);background:var(--bg2);border-left:1px solid var(--border);z-index:50;overflow-y:auto;padding:12px">
+  <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:12px">История чатов</div>
+  <div id="history-list"></div>
+</div>
+
+<!-- ПАНЕЛЬ МОДЕЛЕЙ -->
+<div id="models-panel" style="display:none;position:fixed;top:53px;right:0;width:340px;height:calc(100vh - 53px);background:var(--bg2);border-left:1px solid var(--border);z-index:50;overflow-y:auto;padding:16px">
+  <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px">📋 Нейросети</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Все модели работают через LM Studio</div>
+  <div id="models-list">
+    <div style="color:var(--muted);font-size:12px">Загрузка...</div>
+  </div>
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Статус LM Studio</div>
+    <div id="lm-status-info" style="font-size:12px;color:var(--text)">—</div>
+  </div>
+</div>
+
+<div class="model-bar">
+  <span class="model-label">Модель:</span>
+  <button class="model-btn active" data-model="auto" onclick="selectModel('auto', this)">⚡ Авто</button>
+  <button class="model-btn" data-model="coder" onclick="selectModel('coder', this)">💻 Coder</button>
+  <button class="model-btn" data-model="reasoner" onclick="selectModel('reasoner', this)">🧠 Reasoner</button>
+  <button class="model-btn" data-model="writer" onclick="selectModel('writer', this)">✍️ Writer</button>
+  <button class="model-btn" data-model="vision" onclick="selectModel('vision', this)">👁️ Vision</button>
+  <div style="width:1px;background:var(--border);margin:0 4px;align-self:stretch"></div>
+  <button class="model-btn" style="color:var(--purple);border-color:rgba(188,140,255,.4)" onclick="openTeam()">🤖 Coder Team</button>
+</div>
+
+<!-- CODER TEAM MODAL -->
+<div id="team-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;overflow-y:auto;padding:20px">
+  <div style="max-width:860px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="font-size:18px;color:var(--purple)">🤖 Coder Team</h2>
+      <button onclick="closeTeam()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 12px;cursor:pointer">✕ Закрыть</button>
+    </div>
+    <!-- Агенты -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+      <div id="ta-writer"   style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;transition:.2s"><div style="font-size:20px">✍️</div><div style="font-size:12px;font-weight:600;margin:4px 0">Writer</div><div style="font-size:11px;color:var(--muted)">DeepSeek-Coder</div></div>
+      <div id="ta-reviewer" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;transition:.2s"><div style="font-size:20px">🔍</div><div style="font-size:12px;font-weight:600;margin:4px 0">Reviewer</div><div style="font-size:11px;color:var(--muted)">DeepSeek-R1</div></div>
+      <div id="ta-fixer"    style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;transition:.2s"><div style="font-size:20px">🔧</div><div style="font-size:12px;font-weight:600;margin:4px 0">Fixer</div><div style="font-size:11px;color:var(--muted)">DeepSeek-Coder</div></div>
+      <div id="ta-refiner"  style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;transition:.2s"><div style="font-size:20px">✨</div><div style="font-size:12px;font-weight:600;margin:4px 0">Refiner</div><div style="font-size:11px;color:var(--muted)">Qwen2.5</div></div>
+    </div>
+    <!-- Ввод задачи -->
+    <textarea id="team-task" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;min-height:80px;outline:none" placeholder="Опишите задачу... например: напиши парсер новостей на Python"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="team-run-btn" onclick="runTeam()" style="background:var(--purple);color:#000;border:none;border-radius:8px;padding:8px 20px;cursor:pointer;font-weight:600">🚀 Запустить</button>
+      <button onclick="clearTeamModal()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;cursor:pointer">Очистить</button>
+    </div>
+    <!-- Лог -->
+    <div id="team-log-wrap" style="display:none;margin-top:16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Лог выполнения:</div>
+      <pre id="team-log" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;max-height:300px;overflow-y:auto;white-space:pre-wrap;color:var(--text)"></pre>
+    </div>
+    <!-- Результат -->
+    <div id="team-code-wrap" style="display:none;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:12px;color:var(--muted)">Финальный код:</div>
+        <button onclick="copyTeamCode()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer">📋 Копировать</button>
+      </div>
+      <pre id="team-code" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;max-height:400px;overflow-y:auto;white-space:pre-wrap;color:#79c0ff"></pre>
+    </div>
+  </div>
+</div>
+
+<div class="chat-container" id="chat">
+  <div class="msg-wrap bot">
+    <div class="msg-meta">Smart Assistant</div>
+    <div class="msg bot">Привет! Я Smart Assistant с четырьмя специализированными моделями.
+
+<b>Как пользоваться:</b>
+• Просто пиши — <b>Авто</b> режим выберет нужную модель
+• 💻 <b>Coder</b> — написать/исправить код, создать сайт
+• 🧠 <b>Reasoner</b> — сложные задачи, математика, рассуждения
+• ✍️ <b>Writer</b> — статьи, переводы, тексты
+• 👁️ <b>Vision</b> — загрузи картинку и задай вопрос
+
+Или нажми 🖼 чтобы сгенерировать изображение.</div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="toolbar">
+    <button class="tool-btn" onclick="toggleDraw()">🖼 Нарисовать</button>
+    <label class="tool-btn" style="cursor:pointer">
+      📎 Фото
+      <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+    </label>
+    <button class="tool-btn" onclick="clearChat()">🗑 Очистить</button>
+    <span id="draw-indicator" class="draw-indicator" style="display:none">🖼 Режим генерации картинки</span>
+    <span id="img-indicator" class="img-indicator" style="display:none" onclick="clearImage()">📎 Изображение прикреплено ✕</span>
+  </div>
+  <img id="upload-preview" class="upload-preview" style="display:none">
+  <div class="input-row">
+    <textarea class="input-box" id="input" rows="1"
+      placeholder="Напиши что-нибудь... (Enter — отправить, Shift+Enter — новая строка)"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="send()">➤</button>
+    <button class="send-btn" id="stop-btn" onclick="stopGeneration()" style="display:none;background:var(--red);color:#fff" title="Остановить">■</button>
+  </div>
+</div>
+
+<script>
+let selectedModel = 'auto';
+let drawMode      = false;
+let uploadedImage = null;
+let stopFlag      = false;
+let currentReader = null;
+
+// ─── История чатов ───
+let currentChatId   = null;
+let currentMessages = [];
+let chatCreated     = new Date().toISOString();
+
+async function newChat() {
+  // Сохраняем текущий чат если есть сообщения
+  if (currentMessages.length > 0) {
+    const title = currentMessages[0]?.text?.slice(0, 50) || 'Чат';
+    await fetch('/api/chats/save', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({id: currentChatId, title, created: chatCreated, messages: currentMessages})
+    });
+  }
+  // Сбрасываем и открываем историю
+  currentChatId   = null;
+  currentMessages = [];
+  chatCreated     = new Date().toISOString();
+  clearChat();
+  document.getElementById('history-panel').style.display = 'block';
+  loadHistoryList();
+}
+
+function toggleHistory() {
+  const panel = document.getElementById('history-panel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    loadHistoryList();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+async function loadHistoryList() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:12px">Загрузка...</div>';
+  const chats = await fetch('/api/chats').then(r => r.json());
+  if (!chats.length) { list.innerHTML = '<div style="color:var(--muted);font-size:12px">Нет сохранённых чатов</div>'; return; }
+  list.innerHTML = chats.map(c => `
+    <div style="padding:10px;border-radius:8px;margin-bottom:6px;background:var(--bg3);border:1px solid var(--border);cursor:pointer"
+         onclick="loadChat('${c.id}')">
+      <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;display:flex;justify-content:space-between">
+        <span>${c.count} сообщ.</span>
+        <span onclick="event.stopPropagation();deleteChat('${c.id}',this)" style="color:var(--red);cursor:pointer">✕</span>
+      </div>
+    </div>`).join('');
+}
+
+async function loadChat(id) {
+  const data = await fetch(`/api/chats/${id}`).then(r => r.json());
+  currentChatId   = data.id;
+  currentMessages = data.messages || [];
+  chatCreated     = data.created;
+  const chat = document.getElementById('chat');
+  chat.innerHTML = '';
+  for (const m of currentMessages) {
+    if (m.role === 'user') addMsg('user', m.text.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+    else addMsg('bot', formatText(m.text), m.model || '');
+  }
+  document.getElementById('history-panel').style.display = 'none';
+}
+
+async function deleteChat(id, el) {
+  await fetch(`/api/chats/${id}`, {method:'DELETE'});
+  el.closest('div[onclick]').remove();
+}
+
+async function saveCurrentChat(userMsg, botMsg, model) {
+  // Обновляем последнее сообщение бота (уже добавленное в pushUserMsg)
+  const last = currentMessages[currentMessages.length - 1];
+  if (last && last.role === 'bot_pending') {
+    last.role = 'bot'; last.text = botMsg; last.model = model;
+  } else {
+    currentMessages.push({role:'bot', text: botMsg, model, time: new Date().toISOString()});
+  }
+  const title = currentMessages[0]?.text?.slice(0, 50) || 'Чат';
+  const res = await fetch('/api/chats/save', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({id: currentChatId, title, created: chatCreated, messages: currentMessages})
+  }).then(r => r.json());
+  currentChatId = res.id;
+}
+
+function pushUserMsg(text) {
+  currentMessages.push({role:'user', text, time: new Date().toISOString()});
+  currentMessages.push({role:'bot_pending', text: '', time: new Date().toISOString()});
+  // Сохраняем сразу после отправки пользователя
+  const title = currentMessages[0]?.text?.slice(0, 50) || 'Чат';
+  fetch('/api/chats/save', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({id: currentChatId, title, created: chatCreated, messages: currentMessages.filter(m=>m.role!=='bot_pending')})
+  }).then(r=>r.json()).then(d=>{ currentChatId = d.id; });
+}
+
+async function stopGeneration() {
+  stopFlag = true;
+  try { await fetch('/api/stop', {method: 'POST'}); } catch(e) {}
+  if (currentReader) { currentReader.cancel(); currentReader = null; }
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('send-btn').disabled = false;
+}
+
+// ─── Status ───
+const MODEL_ICONS = {auto:'⚡', coder:'💻', reasoner:'🧠', writer:'✍️', vision:'👁️'};
+let _lastStatus = null;
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status').then(r => r.json());
+    _lastStatus = r;
+    document.getElementById('device-badge').textContent = '⚡ ' + r.device.toUpperCase();
+    for (const [name, isCached] of Object.entries(r.cached)) {
+      const btn = document.querySelector(`[data-model="${name}"]`);
+      if (btn && isCached) btn.classList.add('cached');
+    }
+    if (r.current_model) updateModelBadge(r.current_model);
+    // Обновляем панель моделей если открыта
+    if (document.getElementById('models-panel').style.display !== 'none') renderModelsPanel(r);
+  } catch(e) {}
+}
+
+function renderModelsPanel(r) {
+  const list = document.getElementById('models-list');
+  const info = r.models_info || {};
+  const names = {auto:'Авто-роутер', coder:'Coder', reasoner:'Reasoner', writer:'Writer', vision:'Vision'};
+  const descriptions = {
+    auto: 'Автоматически выбирает нужную модель',
+    coder: 'Генерация и отладка кода',
+    reasoner: 'Сложные задачи и рассуждения',
+    writer: 'Тексты, статьи, творчество',
+    vision: 'Анализ изображений',
+  };
+  let html = '';
+  for (const [key, cfg] of Object.entries(info)) {
+    const icon = MODEL_ICONS[key] || '🤖';
+    const short = cfg.model_short || cfg.model_id;
+    html += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:16px">${icon}</span>
+        <span style="font-size:13px;font-weight:600;color:var(--text)">${names[key]||key}</span>
+        <span style="font-size:10px;background:rgba(88,166,255,.15);color:var(--accent);border-radius:4px;padding:1px 6px">LM Studio</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${descriptions[key]||''}</div>
+      <div style="font-size:10px;color:var(--muted);font-family:monospace;word-break:break-all">${short}</div>
+      <div style="display:flex;gap:12px;margin-top:6px;font-size:10px;color:var(--muted)">
+        <span>temp: ${cfg.temperature}</span>
+        <span>max tokens: ${cfg.max_tokens}</span>
+      </div>
+    </div>`;
+  }
+  list.innerHTML = html || '<div style="color:var(--muted);font-size:12px">Нет данных о моделях</div>';
+
+  const lmOk = r.lm_studio_ok;
+  document.getElementById('lm-status-info').innerHTML =
+    `<span style="color:${lmOk?'var(--green)':'var(--red)'}">${lmOk ? '🟢 Запущена' : '🔴 Не запущена'}</span>` +
+    `<span style="color:var(--muted);margin-left:8px;font-size:11px">${r.lm_studio_url||''}</span>` +
+    (r.current_model ? `<div style="margin-top:4px;font-size:11px;color:var(--muted)">Загружена: <span style="color:var(--text)">${r.current_model.split('/').pop()}</span></div>` : '');
+}
+
+function toggleModelsPanel() {
+  const panel = document.getElementById('models-panel');
+  const histPanel = document.getElementById('history-panel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  histPanel.style.display = 'none';
+  if (!isOpen && _lastStatus) renderModelsPanel(_lastStatus);
+  else if (!isOpen) loadStatus();
+}
+loadStatus();
+setInterval(loadStatus, 5000);
+
+// ─── Model selection ───
+function selectModel(name, btn) {
+  selectedModel = name;
+  document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function updateModelBadge(name) {
+  const b = document.getElementById('current-model-badge');
+  if (name) { b.textContent = name; b.style.display = ''; }
+  else b.style.display = 'none';
+}
+
+// ─── Image upload ───
+function handleImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedImage = e.target.result;
+    document.getElementById('upload-preview').src = uploadedImage;
+    document.getElementById('upload-preview').style.display = 'block';
+    document.getElementById('img-indicator').style.display = '';
+    if (selectedModel === 'auto') selectModel('vision', document.querySelector('[data-model="vision"]'));
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  uploadedImage = null;
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('img-indicator').style.display = 'none';
+  document.getElementById('img-upload').value = '';
+}
+
+// ─── Draw mode ───
+function toggleDraw() {
+  drawMode = !drawMode;
+  document.getElementById('draw-indicator').style.display = drawMode ? '' : 'none';
+  if (drawMode) document.getElementById('input').placeholder = 'Опиши что нарисовать... (на английском лучше)';
+  else          document.getElementById('input').placeholder = 'Напиши что-нибудь...';
+}
+
+// ─── Chat ───
+function addMsg(role, html, extra='') {
+  const chat = document.getElementById('chat');
+  const wrap = document.createElement('div');
+  wrap.className = `msg-wrap ${role}`;
+  const label = role === 'user' ? 'Вы' : (extra || 'Ассистент');
+  wrap.innerHTML = `
+    <div class="msg-meta">${label}</div>
+    <div class="msg ${role}">${html}</div>`;
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return wrap.querySelector('.msg');
+}
+
+function addStatus(text) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg-wrap bot';
+  div.id = 'status-msg';
+  div.innerHTML = `<div class="msg status">⏳ ${text}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function removeStatus() {
+  const s = document.getElementById('status-msg');
+  if (s) s.remove();
+}
+
+function formatText(text) {
+  text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  return text;
+}
+
+function renderMath(el) {
+  if (!window.katexReady || !window.renderMathInElement) return;
+  renderMathInElement(el, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '\\[', right: '\\]', display: true},
+      {left: '\\(', right: '\\)', display: false},
+      {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false
+  });
+}
+
+async function send() {
+  const input = document.getElementById('input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  autoResize(input);
+  stopFlag = false;
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('stop-btn').style.display = 'flex';
+
+  // /draw command
+  if (drawMode || msg.toLowerCase().startsWith('/draw ')) {
+    const prompt = drawMode ? msg : msg.slice(6).trim();
+    addMsg('user', msg);
+    drawMode = false;
+    document.getElementById('draw-indicator').style.display = 'none';
+    input.placeholder = 'Напиши что-нибудь...';
+    await runDraw(prompt);
+    document.getElementById('send-btn').disabled = false;
+    return;
+  }
+
+  // Сохраняем сообщение пользователя сразу
+  pushUserMsg(msg);
+
+  // Show user message
+  if (uploadedImage) {
+    addMsg('user', `<img src="${uploadedImage}" class="upload-preview"><br>${msg}`);
+  } else {
+    addMsg('user', msg.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+  }
+
+  const statusDiv = addStatus('Думаю...');
+  const botMsg    = addMsg('bot', '<div class="typing"><span></span><span></span><span></span></div>');
+
+  let fullText  = '';
+  let modelUsed = selectedModel;
+
+  try {
+    const body = {
+      message: msg,
+      model: selectedModel,
+      image: uploadedImage || undefined,
+    };
+    clearImage();
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+
+    currentReader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      if (stopFlag) break;
+      const {done, value} = await currentReader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = JSON.parse(line.slice(6));
+
+        if (d.type === 'status') {
+          statusDiv.querySelector('.msg').textContent = '⏳ ' + d.text;
+        } else if (d.type === 'model') {
+          modelUsed = d.text;
+          updateModelBadge(d.text);
+          statusDiv.querySelector('.msg').textContent = '⚙️ ' + d.text + ' генерирует...';
+        } else if (d.type === 'token') {
+          fullText += d.text;
+          botMsg.innerHTML = formatText(fullText.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+          document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+        } else if (d.type === 'error') {
+          botMsg.innerHTML = `<span style="color:var(--red)">Ошибка: ${d.text}</span>`;
+        } else if (d.type === 'done') {
+          botMsg.innerHTML = formatText(fullText);
+          botMsg.closest('.msg-wrap').querySelector('.msg-meta').textContent = modelUsed;
+          renderMath(botMsg);
+          saveCurrentChat(msg, fullText, modelUsed);
+        }
+      }
+    }
+    currentReader = null;
+  } catch(e) {
+    if (!stopFlag)
+      botMsg.innerHTML = `<span style="color:var(--red)">Ошибка соединения: ${e}</span>`;
+  }
+
+  removeStatus();
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+
+async function runDraw(prompt) {
+  const statusDiv = addStatus('Загружаю SDXL-Turbo...');
+  const botMsg    = addMsg('bot', '<div class="typing"><span></span><span></span><span></span></div>', 'SDXL-Turbo');
+
+  try {
+    const res = await fetch('/api/draw', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({prompt})
+    });
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = JSON.parse(line.slice(6));
+        if (d.type === 'status') statusDiv.querySelector('.msg').textContent = '⏳ ' + d.text;
+        else if (d.type === 'image') {
+          botMsg.innerHTML = `<em>Промпт: "${prompt}"</em><br><img src="${d.image}" class="gen-image">`;
+        }
+        else if (d.type === 'error') botMsg.innerHTML = `<span style="color:var(--red)">Ошибка: ${d.text}</span>`;
+      }
+    }
+  } catch(e) {
+    botMsg.innerHTML = `<span style="color:var(--red)">${e}</span>`;
+  }
+  removeStatus();
+}
+
+function clearChat() {
+  const chat = document.getElementById('chat');
+  chat.innerHTML = `<div class="msg-wrap bot">
+    <div class="msg-meta">Smart Assistant</div>
+    <div class="msg bot">Привет! Я Smart Assistant с четырьмя специализированными моделями.
+
+<b>Как пользоваться:</b>
+• Просто пиши — <b>Авто</b> режим выберет нужную модель
+• 💻 <b>Coder</b> — написать/исправить код, создать сайт
+• 🧠 <b>Reasoner</b> — сложные задачи, математика, рассуждения
+• ✍️ <b>Writer</b> — статьи, переводы, тексты
+• 👁️ <b>Vision</b> — загрузи картинку и задай вопрос
+
+Или нажми 🖼 чтобы сгенерировать изображение.</div>
+  </div>`;
+}
+
+// ─── Input ───
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ─── Coder Team ───
+function openTeam()  { document.getElementById('team-modal').style.display = 'block'; }
+function closeTeam() { document.getElementById('team-modal').style.display = 'none'; }
+
+function setTeamAgent(name) {
+  ['writer','reviewer','fixer','refiner'].forEach(a => {
+    const el = document.getElementById('ta-' + a);
+    el.style.borderColor = '';
+    el.style.background = 'var(--bg3)';
+  });
+  if (name) {
+    const el = document.getElementById('ta-' + name);
+    el.style.borderColor = 'var(--purple)';
+    el.style.background = 'rgba(188,140,255,.1)';
+  }
+}
+
+async function runTeam() {
+  const task = document.getElementById('team-task').value.trim();
+  if (!task) { alert('Введите задачу'); return; }
+
+  const btn  = document.getElementById('team-run-btn');
+  const log  = document.getElementById('team-log');
+  const logW = document.getElementById('team-log-wrap');
+  const codeW= document.getElementById('team-code-wrap');
+  const code = document.getElementById('team-code');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Выполняется...';
+  logW.style.display = 'block';
+  codeW.style.display = 'none';
+  log.textContent = '';
+  setTeamAgent(null);
+
+  try {
+    const resp = await fetch('/api/coder_team/run', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({task})
+    });
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = JSON.parse(line.slice(6));
+        if (d.done) {
+          if (d.code) { code.textContent = d.code; codeW.style.display = 'block'; }
+          setTeamAgent(null);
+          break;
+        }
+        if (d.line !== undefined) {
+          if (d.line.includes('АГЕНТ 1') || d.line.includes('WRITER'))   setTeamAgent('writer');
+          if (d.line.includes('АГЕНТ 2') || d.line.includes('REVIEWER')) setTeamAgent('reviewer');
+          if (d.line.includes('АГЕНТ 3') || d.line.includes('FIXER'))    setTeamAgent('fixer');
+          if (d.line.includes('АГЕНТ 4') || d.line.includes('REFINER'))  setTeamAgent('refiner');
+          log.textContent += d.line + '\n';
+          log.scrollTop = log.scrollHeight;
+        }
+      }
+    }
+  } catch(e) {
+    log.textContent += '\nОшибка: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🚀 Запустить';
+}
+
+function clearTeamModal() {
+  document.getElementById('team-task').value = '';
+  document.getElementById('team-log').textContent = '';
+  document.getElementById('team-log-wrap').style.display = 'none';
+  document.getElementById('team-code-wrap').style.display = 'none';
+  setTeamAgent(null);
+}
+
+function copyTeamCode() {
+  navigator.clipboard.writeText(document.getElementById('team-code').textContent)
+    .then(() => alert('Скопировано!'));
+}
+</script>
+</body>
+</html>
