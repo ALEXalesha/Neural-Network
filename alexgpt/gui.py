@@ -11,7 +11,7 @@ from pathlib import Path
 from PyQt6.QtCore import QTimer, QUrl, Qt
 from PyQt6.QtGui import QAction, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
-from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
+from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu, QSystemTrayIcon
 
@@ -64,7 +64,7 @@ def make_icon(size: int = 48) -> QIcon:
 
 
 class MainWindow(QMainWindow):
-    SERVER_TIMEOUT_MS = 120_000  # 2 мин — первый запуск грузит модели
+    SERVER_TIMEOUT_MS = 300_000  # первый запуск после установки: антивирус сканирует ~1 ГБ файлов
 
     def __init__(self, port, server):
         super().__init__()
@@ -82,10 +82,11 @@ class MainWindow(QMainWindow):
         icon = make_icon()
         self.setWindowIcon(icon)
 
-        profile = QWebEngineProfile.defaultProfile()
-        profile.setPersistentStoragePath(str(DATA_DIR / "webdata"))
-        profile.setCachePath(str(DATA_DIR / "webcache"))
-        ws = profile.settings()
+        # defaultProfile() в Qt 6 — "инкогнито": localStorage с историей чатов терялся бы при выходе
+        self.profile = QWebEngineProfile("AlexGPT", QApplication.instance())
+        self.profile.setPersistentStoragePath(str(DATA_DIR / "webdata"))
+        self.profile.setCachePath(str(DATA_DIR / "webcache"))
+        ws = self.profile.settings()
         ws.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
         for attr in ("JavascriptCanAccessClipboard", "JavascriptCanPaste"):
             a = getattr(QWebEngineSettings.WebAttribute, attr, None)
@@ -93,6 +94,7 @@ class MainWindow(QMainWindow):
                 ws.setAttribute(a, True)
 
         self.view = QWebEngineView()
+        self.view.setPage(QWebEnginePage(self.profile, self.view))
         self.view.page().setBackgroundColor(QColor("#0d1117"))
         self.view.setHtml(LOADING_HTML)
         self.setCentralWidget(self.view)
@@ -206,10 +208,19 @@ class MainWindow(QMainWindow):
         )
 
 
-def free_port():
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
+def pick_port():
+    # localStorage (история чатов) привязан к origin с портом, поэтому порт по возможности постоянный
+    saved = DATA_DIR / "port.txt"
+    text = saved.read_text().strip() if saved.exists() else ""
+    for port in (int(text) if text.isdigit() else 5050, 0):
+        with socket.socket() as s:
+            try:
+                s.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+            port = s.getsockname()[1]
+        saved.write_text(str(port))
+        return port
 
 
 def spawn_server(port):
@@ -240,7 +251,7 @@ def main():
     instance = QLocalServer()
     instance.listen(instance_name)
 
-    port = free_port()
+    port = pick_port()
     server = spawn_server(port)
     win = MainWindow(port, server)
     instance.newConnection.connect(lambda: (instance.nextPendingConnection(), win.show_from_tray()))
