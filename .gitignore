@@ -1,52 +1,31 @@
-# ===== Веса моделей / чекпойнты =====
-*.pth
-*.pt
-*.onnx
-*.ckpt
-*.h5
-
-# ===== Исполняемые файлы и артефакты сборки =====
-*.exe
-*.spec
-build/
-dist/
-build_tmp/
-alexgpt_build/
-_MEI*/
+# Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+.venv/
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
 
-# ===== Датасеты и крупные данные =====
-*.tsv
-*.bz2
-*.csv
-data/
-chats/
-gan_progress/
-.webcache/
-.webdata/
+# Данные приложения при запуске из исходников (чаты, логи, профиль браузера)
+.appdata/
 
-# Сгенерированные токенайзеры (создаются обучающими скриптами)
-bpe_en.json
-bpe_ru.json
-bpe_tokenizer.json
+# Сборка
+packaging/.buildvenv/
+packaging/build/
+packaging/dist/
 
-# ===== Картинки / результаты =====
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.bmp
+# Лаборатория: датасеты, веса, графики и токенайзеры создаются скриптами
+lab/data/
+lab/gan_progress/
+lab/*.pth
+lab/*.txt
+!lab/requirements.txt
+lab/*.bz2
+lab/*.tsv
+lab/*.png
+lab/*.json
 
-# ===== Большие текстовые корпуса и выводы =====
-*.txt
-
-# ===== Логи и временные маркеры =====
-*.log
-.deps_ok
-.torch_ok
-
-# ===== Локальные настройки =====
+# Локальные инструменты
 .claude/
-settings.local.json
+.remember/
+*.log

@@ -1,0 +1,12 @@
+# AlexGPT: приложение (python alexgpt/main.py)
+torch>=2.2
+numpy
+flask>=3.0
+requests
+pillow
+tokenizers
+PyQt6
+PyQt6-WebEngine
+
+# Необязательно, только для раздела "Рисование" (SDXL-Turbo, ~7 ГБ при первом запуске):
+# diffusers transformers accelerate
