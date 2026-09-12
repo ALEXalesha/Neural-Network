@@ -1638,7 +1638,10 @@ def start_draw_worker():
     if hf_model_dir().exists():
         env["HF_HUB_OFFLINE"] = "1"     # модель уже скачана — не ходим в интернет при каждом запуске
     err_log = open(DATA_DIR / "draw_worker.log", "a", encoding="utf-8")
-    proc = subprocess.Popen([py, "-u", str(APP_DIR / "draw_worker.py")], stdin=subprocess.PIPE,
+    # В сборке draw_worker.py лежит в _internal рядом с библиотеками самой программы (Python 3.13).
+    # Без -P Python модуля (3.12) поставил бы эту папку первой в sys.path и взял бы оттуда чужой torch.
+    flags = ["-u", "-P"] if py == str(draw_addon_python()) else ["-u"]
+    proc = subprocess.Popen([py, *flags, str(APP_DIR / "draw_worker.py")], stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=err_log, text=True, encoding="utf-8",
                             errors="replace", creationflags=NO_WINDOW, env=env, cwd=str(DATA_DIR))
     err_log.close()

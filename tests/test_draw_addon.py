@@ -42,6 +42,13 @@ def test_draw_via_worker_reuses_process(client, server, fake_worker):
     assert server._draw.proc.pid == pid, "модель должна оставаться загруженной между картинками"
 
 
+def test_addon_python_ignores_script_dir(client, server, fake_worker, monkeypatch):
+    # В сборке draw_worker.py лежит среди библиотек программы: Python модуля не должен их импортировать
+    monkeypatch.setattr(server, "draw_addon_python", lambda: sys.executable)
+    check_response(client.post("/api/draw", json={"prompt": "кот"}))
+    assert "-P" in server._draw.proc.args
+
+
 def test_draw_stop(client, server, fake_worker):
     import threading
     threading.Timer(0.5, lambda: client.post("/api/draw/stop")).start()
