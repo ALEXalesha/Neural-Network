@@ -7,3 +7,7 @@ scipy
 tokenizers
 pillow
 wikipedia
+# датасеты с Hugging Face (hf_data.py) и оценка переводчика (eval_translator.py)
+huggingface_hub
+pyarrow
+sacrebleu

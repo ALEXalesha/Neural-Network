@@ -33,18 +33,27 @@ def main():
     models = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent.parent / "models"
     en_tok = Tokenizer.from_file(str(models / "bpe_en.json"))
     ru_tok = Tokenizer.from_file(str(models / "bpe_ru.json"))
-    val = build_pairs()[:N_VAL]
+    pairs = build_pairs()
+    val, train = pairs[:N_VAL], pairs[N_VAL:]
+    # В Tatoeba у одной фразы бывает несколько переводов: 55% английских фраз отложенной выборки
+    # встречаются в обучении с другим переводом. Честное сравнение — на парах, где обе стороны новые.
+    seen_en, seen_ru = {e for e, _ in train}, {r for _, r in train}
+    clean = [i for i, (e, r) in enumerate(val) if e not in seen_en and r not in seen_ru]
+    print(f"Отложенных пар: {len(val)}, из них полностью новых для модели: {len(clean)}")
     en, ru = [p[0] for p in val], [p[1] for p in val]
     for direction, src, ref, st, tt in (("en2ru", en, ru, en_tok, ru_tok), ("ru2en", ru, en, ru_tok, en_tok)):
         model = load(models, direction, st, tt)
         t0 = time.time()
         hyp = [translate(model, s, st, tt) for s in src]
-        bleu = sacrebleu.corpus_bleu(hyp, [ref]).score
-        chrf = sacrebleu.corpus_chrf(hyp, [ref]).score
-        exact = sum(h.strip() == r.strip() for h, r in zip(hyp, ref)) / len(ref)
-        print(f"{direction}: BLEU {bleu:.1f} | chrF {chrf:.1f} | дословно совпало {exact:.0%} | {time.time() - t0:.0f} с")
-        for s, h, r in list(zip(src, hyp, ref))[:3]:
-            print(f"    {s} → {h}   (эталон: {r})")
+        for name, idx in (("все пары", range(len(val))), ("только новые", clean)):
+            h, r = [hyp[i] for i in idx], [ref[i] for i in idx]
+            bleu = sacrebleu.corpus_bleu(h, [r]).score
+            chrf = sacrebleu.corpus_chrf(h, [r]).score
+            exact = sum(a.strip() == b.strip() for a, b in zip(h, r)) / len(r)
+            print(f"{direction} [{name}]: BLEU {bleu:.1f} | chrF {chrf:.1f} | дословно совпало {exact:.0%}")
+        print(f"    {time.time() - t0:.0f} с")
+        for i in clean[:3]:
+            print(f"    {src[i]} → {hyp[i]}   (эталон: {ref[i]})")
 
 
 if __name__ == "__main__":
