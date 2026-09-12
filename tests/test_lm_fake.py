@@ -82,7 +82,8 @@ def test_homework_parses_every_task(client, fake_lm, tasks):
     fake_lm["reply"] = "<think>hmm</think>" + "\n\n".join(blocks)
     d = check_response(client.post("/api/homework/solve", json={"text": "реши"}))
     assert d["answer"].split("\n") == [f"Задание {i}: {a}" for i, (a, _) in enumerate(tasks, 1)]
-    assert "<think>" not in d["raw"]
+    # Убран только ведущий блок рассуждений; «<think>» внутри ответа — это уже текст ответа
+    assert d["raw"] == "\n\n".join(blocks).strip()
 
 
 @given(answer, st.none() | answer)

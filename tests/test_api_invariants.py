@@ -36,7 +36,10 @@ ENDPOINT_KEYS = {
     "/api/recommender/recommend": ["liked", "top_n"],
     "/api/homework/solve": ["text", "image", "subject"],
     "/api/chat": ["message", "model", "image"],
-    "/api/lm/download": ["model_id"],
+    "/api/lm/get": ["role", "spec"],
+    "/api/lm/load": ["key"],
+    "/api/lm/delete": ["key"],
+    "/api/sketch/predict": ["image", "top"],
     "/api/coder_v2/control": ["action", "text"],
 }
 
@@ -168,10 +171,15 @@ def test_ner_tokens_and_entities(client, server, words):
         assert resp.status_code == 400
         return
     tokens = [t["token"] for t in d["tokens"]]
-    assert tokens == text.split()[:server.load_ner().max_len]
-    joined = " ".join(tokens)
+    assert tokens == server.TOKEN_RE.findall(text)[:server.NER_MAX_TOKENS]
+    tags = [t["tag"] for t in d["tokens"]]
+    assert set(tags) <= set(server.load_ner().tags)
+    # Сущностей столько же, сколько начал сущностей в BIO (B-X или I-X не после X)
+    starts = sum(1 for i, g in enumerate(tags)
+                 if g != "O" and (g.startswith("B-") or i == 0 or tags[i - 1][2:] != g[2:] or tags[i - 1] == "O"))
+    assert len(d["entities"]) == starts
     for ent in d["entities"]:
-        assert ent["text"] in joined and ent["type"]
+        assert ent["text"] in text and ent["text"] == ent["text"].strip() and ent["type"] in ("PER", "ORG", "LOC", "DATE")
 
 
 # ---- translator

@@ -29,6 +29,8 @@ $zip = "dist\AlexGPT-$version-portable.zip"
 Remove-Item $zip -ErrorAction SilentlyContinue
 tar.exe -a -cf $zip -C dist\portable AlexGPT
 if ($LASTEXITCODE) { throw "zip failed" }
+# The staging copy is only needed for the zip; it duplicates dist\AlexGPT (~1.2 GB)
+Remove-Item dist\portable -Recurse -Force
 
 Write-Host "[3/3] NSIS installer"
 $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
@@ -39,4 +41,6 @@ if (Test-Path $makensis) {
     Write-Warning "NSIS not found, installer skipped. Install it with: winget install NSIS.NSIS"
 }
 
+# PyInstaller work files are rebuilt with --clean anyway
+Remove-Item build -Recurse -Force -ErrorAction SilentlyContinue
 Get-ChildItem dist -File | Format-Table Name, @{n = 'MB'; e = { [math]::Round($_.Length / 1MB) } }

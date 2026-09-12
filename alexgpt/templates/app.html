@@ -10,13 +10,39 @@
 <script defer src="/static/katex/contrib/auto-render.min.js"
   onload="window._katexReady=true"></script>
 <script src="/static/marked.min.js"></script>
+<script>
+// Тема применяется до отрисовки страницы, чтобы не мигала тёмная
+(function () {
+  try {
+    const s = JSON.parse(localStorage.getItem('uiSettings') || '{}');
+    const h = document.documentElement;
+    if (s.theme) h.dataset.theme = s.theme;
+    if (s.accent) h.dataset.accent = s.accent;
+    if (s.sidebar) h.dataset.sidebar = s.sidebar;
+  } catch (e) {}
+})();
+</script>
 <style>
+/* ══ Темы: фон/поверхности/текст; акцент — отдельно (data-accent) ══ */
 :root{
   --bg:#0d1117;--surf:#161b22;--surf2:#21262d;--border:#30363d;
   --text:#e6edf3;--muted:#8b949e;--faint:#484f58;
-  --purple:#7c3aed;--blue:#3b82f6;--green:#3fb950;--red:#f85149;--yellow:#d29922;
-  --radius:10px;--sidebar:230px;--titlebar:40px;
+  --blue:#3b82f6;--green:#3fb950;--red:#f85149;--yellow:#d29922;
+  --accent:#7c3aed;--accent-rgb:124,58,237;--accent-hover:#6d28d9;--accent2:#3b82f6;
+  --shadow:rgba(0,0,0,.85);
+  --radius:10px;--sidebar:232px;--titlebar:40px;
 }
+html[data-theme=midnight]{--bg:#0b1020;--surf:#121a2e;--surf2:#1b2540;--border:#26324f;--text:#e5e9f5;--muted:#94a0bd;--faint:#4a5675}
+html[data-theme=graphite]{--bg:#0a0a0a;--surf:#141414;--surf2:#1f1f1f;--border:#2c2c2c;--text:#ededed;--muted:#a1a1a1;--faint:#525252}
+html[data-theme=light]{--bg:#f6f8fa;--surf:#ffffff;--surf2:#eef1f4;--border:#d0d7de;--text:#1f2328;--muted:#59636e;--faint:#8c959f;
+  --green:#1a7f37;--red:#cf222e;--yellow:#9a6700;--blue:#0969da;--shadow:rgba(0,0,0,.25)}
+html[data-theme=sepia]{--bg:#f4ecd8;--surf:#fbf6ea;--surf2:#efe5cf;--border:#dccfb0;--text:#3b3024;--muted:#6f604c;--faint:#a39479;
+  --green:#3f7d20;--red:#b3261e;--yellow:#8a6100;--blue:#1f5fa8;--shadow:rgba(60,40,10,.3)}
+html[data-accent=blue]  {--accent:#3b82f6;--accent-rgb:59,130,246;--accent-hover:#2563eb;--accent2:#06b6d4}
+html[data-accent=green] {--accent:#16a34a;--accent-rgb:22,163,74;--accent-hover:#15803d;--accent2:#84cc16}
+html[data-accent=orange]{--accent:#ea580c;--accent-rgb:234,88,12;--accent-hover:#c2410c;--accent2:#f59e0b}
+html[data-accent=pink]  {--accent:#db2777;--accent-rgb:219,39,119;--accent-hover:#be185d;--accent2:#a855f7}
+html[data-accent=teal]  {--accent:#0d9488;--accent-rgb:13,148,136;--accent-hover:#0f766e;--accent2:#3b82f6}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--text)}
 
@@ -25,7 +51,7 @@ html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-fam
   position:absolute;inset:8px;
   border-radius:12px;overflow:hidden;
   background:var(--bg);
-  box-shadow:0 12px 52px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.07);
+  box-shadow:0 12px 52px var(--shadow),0 0 0 1px var(--border);
   display:flex;flex-direction:column;
   transition:inset .1s,border-radius .1s;
 }
@@ -45,19 +71,19 @@ html[data-max='1'] #app-root{inset:0;border-radius:0;box-shadow:none;}
 /* ══ Titlebar ══ */
 #titlebar{
   height:var(--titlebar);min-height:var(--titlebar);
-  background:#0d1117;
-  border-bottom:1px solid #1e2530;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
   display:flex;align-items:center;
   flex-shrink:0;user-select:none;
 }
 #tb-logo{display:flex;align-items:center;gap:8px;padding:0 14px;flex-shrink:0;font-size:13px;font-weight:600}
 #tb-logo .ico{font-size:18px}
-#tb-logo .name{background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#tb-logo .name{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 #tb-drag{flex:1;height:100%;cursor:default}/* draggable zone */
 #tb-pagetitle{font-size:12px;color:var(--faint);padding:0 12px;flex-shrink:0;pointer-events:none}
 #tb-controls{display:flex;align-items:stretch;flex-shrink:0;height:100%}
 .tb-btn{width:46px;height:100%;border:none;background:transparent;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s}
-.tb-btn:hover{background:#21262d;color:var(--text)}
+.tb-btn:hover{background:var(--surf2);color:var(--text)}
 .tb-close:hover{background:#e81123!important;color:#fff!important}
 .tb-max-icon{font-size:12px}
 
@@ -68,12 +94,14 @@ html[data-max='1'] #app-root{inset:0;border-radius:0;box-shadow:none;}
 #sidebar{width:var(--sidebar);min-width:var(--sidebar);background:var(--surf);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
 .logo{padding:16px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
 .logo-icon{font-size:22px}
-.logo-text{font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-text{font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .nav-group{padding:8px 0}
 .nav-label{padding:5px 16px;font-size:10.5px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.6px}
+.nav-label-btn{display:flex;align-items:center;justify-content:space-between}
+.chat-sess-item.active{background:none!important}
 .nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;cursor:pointer;border-radius:6px;margin:1px 6px;color:var(--muted);transition:all .13s;font-size:13px}
 .nav-item:hover{background:var(--surf2);color:var(--text)}
-.nav-item.active{background:rgba(124,58,237,.15);color:var(--purple)}
+.nav-item.active{background:rgba(var(--accent-rgb),.15);color:var(--accent)}
 .nav-item .icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
 .sidebar-footer{margin-top:auto;padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--faint)}
 
@@ -91,17 +119,18 @@ html[data-max='1'] #app-root{inset:0;border-radius:0;box-shadow:none;}
 
 /* ══ Cards ══ */
 .grid{display:grid;gap:14px}
+.grid-cards{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 .grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
 .card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color .2s}
-.card:hover{border-color:var(--purple)}
-.card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.card:hover{border-color:var(--accent)}
+.card-header{display:flex;align-items:flex-start;gap:12px}
 .card-icon{font-size:26px}.card-title{font-size:14px;font-weight:600}.card-desc{font-size:12px;color:var(--muted);margin-top:2px}
-.status-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:12px;margin-left:auto}
+.status-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:12px;white-space:nowrap}
 .pill-ok{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.3)}
 .pill-miss{background:rgba(248,81,73,.1);color:var(--red);border:1px solid rgba(248,81,73,.3)}
-.go-btn{display:block;width:100%;margin-top:12px;padding:7px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);color:var(--purple);border-radius:6px;cursor:pointer;font-size:12px;transition:all .15s;text-align:center}
-.go-btn:hover{background:rgba(124,58,237,.2)}
+.go-btn{display:block;width:100%;margin-top:12px;padding:7px;background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.3);color:var(--accent);border-radius:6px;cursor:pointer;font-size:12px;transition:all .15s;text-align:center}
+.go-btn:hover{background:rgba(var(--accent-rgb),.2)}
 
 /* ══ Tool layout ══ */
 .tool-wrap{display:flex;gap:18px;align-items:flex-start}
@@ -117,24 +146,24 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-wei
 input[type=text],input[type=number],textarea,select{
   width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
   padding:8px 11px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s;font-family:inherit}
-input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{border-color:var(--purple)}
+input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{border-color:var(--accent)}
 textarea{resize:vertical;min-height:86px}
 select option{background:var(--surf)}
-input[type=range]{width:100%;accent-color:var(--purple);cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
 
 /* ══ Buttons ══ */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .13s}
-.btn-primary{background:var(--purple);color:#fff}.btn-primary:hover{background:#6d28d9}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-hover)}
 .btn-primary:disabled{background:var(--surf2);color:var(--faint);cursor:not-allowed}
-.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{border-color:var(--purple);color:var(--purple)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
 .btn-danger{background:transparent;color:var(--red);border:1px solid rgba(248,81,73,.4)}.btn-danger:hover{background:rgba(248,81,73,.1)}
 .btn-sm{padding:4px 11px;font-size:12px}
-.gpt-lang-btn.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.gpt-lang-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
 
 /* ══ Output ══ */
 .result-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;min-height:56px;font-size:13px;line-height:1.6}
-.result-big{font-size:30px;font-weight:700;color:var(--purple);text-align:center;padding:22px}
+.result-big{font-size:30px;font-weight:700;color:var(--accent);text-align:center;padding:22px}
 pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;font-size:12px;line-height:1.6;white-space:pre-wrap;font-family:'Consolas','Courier New',monospace}
 
 /* ══ Bars ══ */
@@ -150,18 +179,38 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
 
 /* ══ MNIST ══ */
 #mnist-canvas{display:block;border:2px solid var(--border);border-radius:8px;cursor:crosshair;background:#111;touch-action:none}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surf2);color:var(--muted);border:1px solid var(--border);white-space:nowrap}
+.chip-green{background:rgba(63,185,80,.15);color:var(--green);border-color:transparent}
+.chip-blue{background:rgba(59,130,246,.15);color:var(--blue);border-color:transparent}
+.chip-red{background:rgba(248,81,73,.12);color:var(--red);border-color:transparent}
+.lm-list{display:flex;flex-direction:column;gap:8px}
+.lm-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap}
+.lm-icon{font-size:22px;width:30px;text-align:center}
+.lm-main{flex:1;min-width:220px}
+.lm-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lm-about{font-size:12px;color:var(--muted);margin-top:3px}
+.lm-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.lm-repo{font-size:11px;color:var(--faint);font-family:monospace}
+.lm-actions{display:flex;gap:6px;flex-wrap:wrap}
+.lm-progress{display:none;margin-top:8px}
+.lm-bar{height:6px;background:var(--surf2);border-radius:3px;overflow:hidden}
+.lm-bar div{height:100%;width:0;background:var(--accent);transition:width .3s}
+.lm-line{font-size:11px;color:var(--muted);margin-top:4px;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .digit-conf{display:flex;align-items:center;gap:7px;margin:3px 0;font-size:12px}
 .digit-conf span:first-child{width:14px;text-align:right;color:var(--muted)}
 .digit-conf .bar{flex:1;height:13px;background:var(--surf2);border-radius:3px;overflow:hidden}
-.digit-conf .bar-fill{height:100%;background:var(--purple);transition:width .3s}
+.digit-conf .bar-fill{height:100%;background:var(--accent);transition:width .3s}
 .digit-conf span:last-child{width:36px;text-align:right;color:var(--muted)}
 
 /* ══ Chat ══ */
 #chat-messages{height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:2px 0}
 .msg{max-width:82%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-.msg-user{align-self:flex-end;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3)}
+.msg-user{align-self:flex-end;background:rgba(var(--accent-rgb),.2);border:1px solid rgba(var(--accent-rgb),.3)}
 .msg-bot{align-self:flex-start;background:var(--surf2);border:1px solid var(--border)}
 .model-badge{font-size:10px;background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:1px 7px;display:inline-block;margin-bottom:3px}
+.think{margin-bottom:8px;border-left:2px solid var(--border);padding-left:9px}
+.think summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+.think-body{color:var(--muted);font-size:12px;white-space:pre-wrap;max-height:220px;overflow-y:auto;margin-top:4px}
 .chat-input-row{display:flex;gap:7px;margin-top:10px}
 .chat-input-row textarea{min-height:40px;max-height:110px;resize:none}
 
@@ -180,25 +229,25 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
 .trans-panel{flex:1}
 .trans-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding-top:26px}
 .dir-btn{font-size:18px;cursor:pointer;background:var(--surf2);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;transition:all .13s}
-.dir-btn:hover{border-color:var(--purple)}
+.dir-btn:hover{border-color:var(--accent)}
 
 /* ══ Stats dashboard ══ */
 .stat-row{display:flex;gap:14px;margin-bottom:18px}
 .stat{flex:1;background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
-.stat-num{font-size:26px;font-weight:700;color:var(--purple)}.stat-label{font-size:11px;color:var(--muted);margin-top:3px}
+.stat-num{font-size:26px;font-weight:700;color:var(--accent)}.stat-label{font-size:11px;color:var(--muted);margin-top:3px}
 
 /* ══ History ══ */
 .history{max-height:180px;overflow-y:auto}
 .hist-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-.hist-expr{color:var(--muted);flex:1}.hist-res{color:var(--purple);font-weight:600}
+.hist-expr{color:var(--muted);flex:1}.hist-res{color:var(--accent);font-weight:600}
 .copy-btn{font-size:11px;padding:2px 6px;background:var(--surf2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--muted)}
 .copy-btn:hover{color:var(--text)}
 
 /* ══ Digit selector ══ */
 .digit-sel{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}
 .d-btn{width:34px;height:34px;border-radius:6px;border:1px solid var(--border);background:var(--surf2);color:var(--text);cursor:pointer;font-size:13px;transition:all .13s;display:flex;align-items:center;justify-content:center}
-.d-btn:hover{border-color:var(--purple)}
-.d-btn.sel{background:rgba(124,58,237,.2);border-color:var(--purple);color:var(--purple)}
+.d-btn:hover{border-color:var(--accent)}
+.d-btn.sel{background:rgba(var(--accent-rgb),.2);border-color:var(--accent);color:var(--accent)}
 
 /* ══ Spinner ══ */
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
@@ -207,6 +256,51 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
 #toasts{position:absolute;bottom:20px;right:20px;display:flex;flex-direction:column;gap:7px;z-index:9999}
 .toast{background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;max-width:300px;animation:fadeIn .18s ease}
 .toast.err{border-color:var(--red);color:var(--red)}.toast.ok{border-color:var(--green);color:var(--green)}
+
+/* ══ Поиск по разделам и компактный сайдбар ══ */
+.nav-search{margin:10px 10px 2px;position:relative}
+.nav-search input{padding:6px 10px 6px 28px!important;font-size:12px!important;background:var(--bg)}
+.nav-search::before{content:'🔎';position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;opacity:.6}
+.nav-item.hidden,.nav-group.hidden{display:none}
+#sb-toggle{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:4px 6px;border-radius:6px}
+#sb-toggle:hover{background:var(--surf2);color:var(--text)}
+html[data-sidebar=mini]{--sidebar:62px}
+html[data-sidebar=mini] .nav-item{font-size:0;justify-content:center;padding:8px 0}
+html[data-sidebar=mini] .nav-item .icon{font-size:17px;width:auto}
+html[data-sidebar=mini] .nav-label,html[data-sidebar=mini] .nav-label-btn,html[data-sidebar=mini] .nav-search,html[data-sidebar=mini] .logo-text,
+html[data-sidebar=mini] #chat-sessions-list,html[data-sidebar=mini] #lm-models-nav,html[data-sidebar=mini] .sidebar-footer{display:none}
+html[data-sidebar=mini] .nav-group{padding:4px 0;border-bottom:1px solid var(--border)}
+html[data-sidebar=mini] .logo{justify-content:center;padding:14px 0 10px}
+
+/* ══ Дашборд ══ */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.hero h2{font-size:20px;font-weight:700}.hero p{color:var(--muted);font-size:13px;margin-top:3px}
+.quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.quick-tile{background:linear-gradient(135deg,rgba(var(--accent-rgb),.14),rgba(var(--accent-rgb),.04));border:1px solid rgba(var(--accent-rgb),.28);
+  border-radius:var(--radius);padding:14px;cursor:pointer;transition:transform .12s,border-color .12s}
+.quick-tile:hover{transform:translateY(-2px);border-color:var(--accent)}
+.quick-tile .q-ico{font-size:24px}.quick-tile .q-name{font-weight:600;margin-top:6px;font-size:13px}
+.quick-tile .q-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.group-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 10px}
+
+/* ══ Настройки ══ */
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.theme-card{border:2px solid var(--border);border-radius:10px;padding:0;cursor:pointer;overflow:hidden;background:none;text-align:left;color:inherit;font:inherit}
+.theme-card.sel{border-color:var(--accent)}
+.theme-prev{height:62px;display:flex}
+.theme-prev .p-side{width:30%}.theme-prev .p-main{flex:1;padding:8px;display:flex;flex-direction:column;gap:5px}
+.theme-prev .p-line{height:6px;border-radius:3px}
+.theme-name{padding:7px 10px;font-size:12px;font-weight:600;background:var(--surf)}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;outline:2px solid transparent}
+.swatch.sel{outline-color:var(--text)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+.set-row:last-child{border-bottom:none}
+.set-row .s-title{font-weight:600;font-size:13px}.set-row .s-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:none;color:var(--muted);padding:6px 12px;cursor:pointer;font-size:12px}
+.seg button.sel{background:var(--accent);color:#fff}
+kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--muted)}
 
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -238,7 +332,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
       <span class="name">AlexGPT</span>
     </div>
     <div id="tb-drag"></div>
-    <div id="tb-pagetitle" id="tb-pt">Дашборд</div>
+    <div id="tb-pagetitle">Главная</div>
     <div id="tb-controls">
       <button class="tb-btn" id="btn-min"   title="Свернуть">─</button>
       <button class="tb-btn" id="btn-max"   title="Развернуть"><span class="tb-max-icon" id="max-icon">☐</span></button>
@@ -255,68 +349,62 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
         <span class="logo-icon">🧠</span>
         <span class="logo-text">AlexGPT</span>
       </div>
+      <div class="nav-search"><input type="text" id="nav-search" placeholder="Найти раздел…  Ctrl+K" oninput="filterNav(this.value)" onkeydown="navSearchKey(event)"></div>
 
       <div class="nav-group">
         <div class="nav-label">Главная</div>
-        <div class="nav-item active" onclick="go('dashboard')"><span class="icon">📊</span>Дашборд</div>
+        <div class="nav-item active" onclick="go('dashboard')"><span class="icon">🏠</span>Главная</div>
         <div class="nav-item" onclick="go('math')"><span class="icon">🧮</span>Калькулятор</div>
       </div>
 
       <div class="nav-group">
-        <div class="nav-label">Регрессия / Прогноз</div>
-        <div class="nav-item" onclick="go('price')"><span class="icon">🏠</span>Цена жилья</div>
-        <div class="nav-item" onclick="go('temperature')"><span class="icon">🌡️</span>Температура</div>
-        <div class="nav-item" onclick="go('timeseries')"><span class="icon">📈</span>Временной ряд</div>
-      </div>
-
-      <div class="nav-group">
-        <div class="nav-label">Кластеризация</div>
-        <div class="nav-item" onclick="go('clustering')"><span class="icon">👥</span>Сегментация клиентов</div>
-        <div class="nav-item" onclick="go('clustering-docs')"><span class="icon">📄</span>Группировка документов</div>
-        <div class="nav-item" onclick="go('recommender')"><span class="icon">🎬</span>Рекомендации</div>
-      </div>
-
-      <div class="nav-group">
-        <div class="nav-label">Распознавание паттернов</div>
-        <div class="nav-item" onclick="go('spam')"><span class="icon">🚫</span>Спам-детектор</div>
-        <div class="nav-item" onclick="go('anomaly')"><span class="icon">💳</span>Аномалии транзакций</div>
-        <div class="nav-item" onclick="go('defect')"><span class="icon">🏭</span>Контроль качества</div>
-        <div class="nav-item" onclick="go('ner')"><span class="icon">🏷️</span>Сущности (NER)</div>
-        <div class="nav-item" onclick="go('sentiment')"><span class="icon">💬</span>Тональность текста</div>
-        <div class="nav-item" onclick="go('mnist')"><span class="icon">✏️</span>Распознавание цифр</div>
-      </div>
-
-      <div class="nav-group">
-        <div class="nav-label">Языковые модели</div>
-        <div class="nav-item" onclick="go('translator')"><span class="icon">🌐</span>Переводчик EN↔RU</div>
-        <div class="nav-item" onclick="go('gpt')"><span class="icon">📝</span>Генерация текста</div>
-        <div class="nav-item" onclick="go('summarize')"><span class="icon">📄</span>Суммаризация</div>
-      </div>
-
-      <div class="nav-group">
-        <div class="nav-label">Генерация</div>
-        <div class="nav-item" onclick="go('gan')"><span class="icon">🎨</span>Цифры (GAN)</div>
-        <div class="nav-item" onclick="go('draw')"><span class="icon">🖼</span>Картинки (AI)</div>
-      </div>
-
-      <div class="nav-group">
-        <div class="nav-label" style="display:flex;align-items:center;justify-content:space-between">
-          AI Ассистент
+        <div class="nav-label nav-label-btn">
+          AI-ассистент (LM Studio)
           <button class="btn btn-outline btn-sm" style="padding:2px 7px;font-size:11px" onclick="newChatSession()" title="Новый чат">＋</button>
         </div>
-        <div class="nav-item" onclick="go('homework')"><span class="icon">📚</span>Решить тест (МЕШ)</div>
         <div class="nav-item" onclick="go('chat')"><span class="icon">🤖</span>Умный чат</div>
         <div id="chat-sessions-list"></div>
+        <div class="nav-item" onclick="go('homework')"><span class="icon">📚</span>Решить тест (МЭШ)</div>
         <div class="nav-item" onclick="go('coder')"><span class="icon">👾</span>Команда кодеров</div>
-        <div class="nav-item" onclick="go('coder-v2')"><span class="icon">🤖</span>Команда v2 (авто-цикл)</div>
+        <div class="nav-item" onclick="go('coder-v2')"><span class="icon">🔁</span>Команда v2 (авто-цикл)</div>
         <div class="nav-item" onclick="go('code-review')"><span class="icon">🔍</span>Проверка кода</div>
-        <div class="nav-item" onclick="go('lm-models')"><span class="icon">🟢</span>Модели LM Studio</div>
-        <!-- LM Studio модели -->
+        <div class="nav-item" onclick="go('lm-models')"><span class="icon">📦</span>Модели: скачать и удалить</div>
         <div id="lm-models-nav" style="padding:4px 6px 0"></div>
       </div>
 
       <div class="nav-group">
+        <div class="nav-label">Текст</div>
+        <div class="nav-item" onclick="go('translator')"><span class="icon">🌐</span>Переводчик EN↔RU</div>
+        <div class="nav-item" onclick="go('sentiment')"><span class="icon">💬</span>Тональность текста</div>
+        <div class="nav-item" onclick="go('spam')"><span class="icon">🚫</span>Спам-детектор</div>
+        <div class="nav-item" onclick="go('ner')"><span class="icon">🏷️</span>Имена, места, даты (NER)</div>
+        <div class="nav-item" onclick="go('summarize')"><span class="icon">📄</span>Суммаризация</div>
+        <div class="nav-item" onclick="go('clustering-docs')"><span class="icon">🗂️</span>Группировка документов</div>
+        <div class="nav-item" onclick="go('gpt')"><span class="icon">📝</span>Генерация текста</div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Картинки</div>
+        <div class="nav-item" onclick="go('draw')"><span class="icon">🖼</span>Нарисовать по описанию</div>
+        <div class="nav-item" onclick="go('sketch')"><span class="icon">🖌️</span>Угадай рисунок</div>
+        <div class="nav-item" onclick="go('mnist')"><span class="icon">✏️</span>Распознавание цифр</div>
+        <div class="nav-item" onclick="go('gan')"><span class="icon">🎨</span>Цифры (GAN)</div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Данные и прогнозы</div>
+        <div class="nav-item" onclick="go('price')"><span class="icon">🏢</span>Цена жилья</div>
+        <div class="nav-item" onclick="go('temperature')"><span class="icon">🌡️</span>Температура</div>
+        <div class="nav-item" onclick="go('timeseries')"><span class="icon">📈</span>Прогноз продаж</div>
+        <div class="nav-item" onclick="go('clustering')"><span class="icon">👥</span>Сегментация клиентов</div>
+        <div class="nav-item" onclick="go('recommender')"><span class="icon">🎬</span>Рекомендации фильмов</div>
+        <div class="nav-item" onclick="go('anomaly')"><span class="icon">💳</span>Аномалии транзакций</div>
+        <div class="nav-item" onclick="go('defect')"><span class="icon">🏭</span>Контроль качества</div>
+      </div>
+
+      <div class="nav-group">
         <div class="nav-label">Система</div>
+        <div class="nav-item" onclick="go('settings')"><span class="icon">⚙️</span>Настройки и темы</div>
         <div class="nav-item" onclick="go('logs')"><span class="icon">📋</span>Логи сервера</div>
       </div>
 
@@ -326,7 +414,8 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
     <!-- ─── MAIN ─── -->
     <div id="main">
       <div id="topbar">
-        <span id="page-title">Дашборд</span>
+        <button id="sb-toggle" onclick="toggleSidebar()" title="Свернуть/развернуть меню">☰</button>
+        <span id="page-title">Главная</span>
         <span id="badge-device" class="badge">CPU</span>
         <span id="badge-lm" class="badge red">LM Studio: офлайн</span>
       </div>
@@ -335,12 +424,51 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
 
       <!-- DASHBOARD -->
       <div id="sec-dashboard" class="section active">
+        <div class="hero">
+          <div><h2 id="hero-hello">Привет! Что делаем?</h2>
+            <p>Слева все разделы, <kbd>Ctrl</kbd>+<kbd>K</kbd> — быстрый поиск. Тема и цвета — в «Настройках».</p></div>
+        </div>
+        <div class="quick">
+          <div class="quick-tile" onclick="go('chat')"><div class="q-ico">🤖</div><div class="q-name">Умный чат</div><div class="q-desc">Вопросы, код, фото</div></div>
+          <div class="quick-tile" onclick="go('homework')"><div class="q-ico">📚</div><div class="q-name">Решить тест</div><div class="q-desc">Скрин или текст задания</div></div>
+          <div class="quick-tile" onclick="go('draw')"><div class="q-ico">🖼</div><div class="q-name">Нарисовать</div><div class="q-desc">Картинка по описанию</div></div>
+          <div class="quick-tile" onclick="go('translator')"><div class="q-ico">🌐</div><div class="q-name">Перевести</div><div class="q-desc">Английский ↔ русский</div></div>
+          <div class="quick-tile" onclick="go('sketch')"><div class="q-ico">🖌️</div><div class="q-name">Угадай рисунок</div><div class="q-desc">160 видов рисунков</div></div>
+          <div class="quick-tile" onclick="go('coder-v2')"><div class="q-ico">👾</div><div class="q-name">Команда кодеров</div><div class="q-desc">Пишет и проверяет код</div></div>
+        </div>
         <div class="stat-row">
           <div class="stat"><div class="stat-num" id="stat-models">0</div><div class="stat-label">Моделей доступно</div></div>
           <div class="stat"><div class="stat-num" id="stat-device">CPU</div><div class="stat-label">Вычисления</div></div>
           <div class="stat"><div class="stat-num" id="stat-lm">—</div><div class="stat-label">LM Studio</div></div>
         </div>
-        <div class="grid grid-4" id="model-cards"></div>
+        <div id="model-cards"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="sec-settings" class="section">
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">🎨 Тема</div>
+          <div class="theme-grid" id="theme-grid"></div>
+        </div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">🌈 Цвет акцента</div>
+          <div class="swatches" id="accent-swatches"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🧭 Интерфейс</div>
+          <div class="set-row">
+            <div><div class="s-title">Меню слева</div><div class="s-desc">Компактное — только значки, больше места под работу. Кнопка ☰ сверху делает то же.</div></div>
+            <div class="seg" id="seg-sidebar"><button data-v="">Полное</button><button data-v="mini">Компактное</button></div>
+          </div>
+          <div class="set-row">
+            <div><div class="s-title">Стартовый раздел</div><div class="s-desc">Что открывать при запуске программы</div></div>
+            <select id="set-start" style="width:auto;min-width:200px" onchange="saveUi({start:this.value})"></select>
+          </div>
+          <div class="set-row">
+            <div><div class="s-title">Сбросить оформление</div><div class="s-desc">Вернуть тёмную тему, фиолетовый акцент и полное меню</div></div>
+            <button class="btn btn-outline btn-sm" onclick="resetUi()">Сбросить</button>
+          </div>
+        </div>
       </div>
 
       <!-- MATH -->
@@ -407,8 +535,8 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
             <div class="panel-title">💬 Анализ тональности</div>
-            <div class="form-group"><label>Текст на русском</label>
-              <textarea id="sent-input" rows="6" placeholder="Введите отзыв или любой текст…"></textarea></div>
+            <div class="form-group"><label>Отзыв на русском</label>
+              <textarea id="sent-input" rows="6" placeholder="Например: пришло быстро, но размер маломерит"></textarea></div>
             <button class="btn btn-primary" style="width:100%" onclick="analyzeSentiment()">Анализировать</button>
             <div style="margin-top:10px"><label style="margin-bottom:6px">Примеры:</label>
               <div class="btn-row">
@@ -454,7 +582,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
             <div id="ts-context" style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px"></div>
             <div id="ts-chart"></div>
             <div id="ts-mean" style="text-align:center;margin-top:8px;color:var(--muted);font-size:13px"></div>
-            <div id="ts-insight" style="text-align:center;margin-top:6px;font-size:13px;font-weight:600;color:var(--purple)"></div>
+            <div id="ts-insight" style="text-align:center;margin-top:6px;font-size:13px;font-weight:600;color:var(--accent)"></div>
           </div></div>
         </div>
       </div>
@@ -494,7 +622,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
           <div class="tool-output"><div class="panel">
             <div class="panel-title">Результат сегментации</div>
             <div id="cl-emoji" style="font-size:60px;text-align:center;padding:14px 0">👤</div>
-            <div id="cl-label" style="text-align:center;font-size:22px;font-weight:700;margin-bottom:8px;color:var(--purple)">—</div>
+            <div id="cl-label" style="text-align:center;font-size:22px;font-weight:700;margin-bottom:8px;color:var(--accent)">—</div>
             <div id="cl-rec" style="text-align:center;font-size:13px;color:var(--muted);padding:0 10px;line-height:1.5"></div>
           </div></div>
         </div>
@@ -694,7 +822,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
             <div class="panel-title">🚫 Анализ текста на спам</div>
-            <div class="form-group"><label>Текст письма (английский)</label>
+            <div class="form-group"><label>Текст письма или SMS (русский или английский)</label>
               <textarea id="spam-input" rows="7" placeholder="Введите текст письма или сообщения…"></textarea></div>
             <button class="btn btn-primary" style="width:100%" onclick="analyzeSpam()">Проверить</button>
             <div style="margin-top:10px"><label style="margin-bottom:6px">Примеры:</label>
@@ -703,6 +831,8 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
                 <button class="btn btn-outline btn-sm" onclick="setSpamEx('ham1')">Не спам</button>
                 <button class="btn btn-outline btn-sm" onclick="setSpamEx('spam2')">Спам 2</button>
                 <button class="btn btn-outline btn-sm" onclick="setSpamEx('ham2')">Не спам 2</button>
+                <button class="btn btn-outline btn-sm" onclick="setSpamEx('spam_ru')">Спам (рус.)</button>
+                <button class="btn btn-outline btn-sm" onclick="setSpamEx('ham_ru')">Не спам (рус.)</button>
               </div></div>
           </div></div>
           <div class="tool-output"><div class="panel">
@@ -750,9 +880,9 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
           <div class="tool-input"><div class="panel">
             <div class="panel-title">🏷️ Извлечение именованных сущностей (NER)</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
-              Bi-LSTM тегирует каждое слово текста. Распознаёт: <b>PER</b> — люди, <b>ORG</b> — организации, <b>LOC</b> — места, <b>DATE</b> — даты. Двуязычная: <b>English + Русский</b>.</div>
-            <div class="form-group"><label>Текст (английский)</label>
-              <textarea id="ner-input" rows="5" placeholder="Enter English text with names, organizations, places and dates…"></textarea></div>
+              Нейросеть размечает каждое слово: <b>PER</b> — люди, <b>ORG</b> — организации, <b>LOC</b> — места, <b>DATE</b> — даты. Русский и английский. Обучена на WikiANN (40 тыс. предложений) — узнаёт и незнакомые имена по написанию.</div>
+            <div class="form-group"><label>Текст на русском или английском</label>
+              <textarea id="ner-input" rows="5" placeholder="Например: Юрий Гагарин полетел в космос 12 апреля 1961 года с Байконура."></textarea></div>
             <button class="btn btn-primary" style="width:100%" onclick="analyzeNER()">Найти сущности</button>
             <div style="margin-top:10px"><label style="margin-bottom:6px">Примеры:</label>
               <div style="font-size:11px;color:var(--faint);margin-bottom:4px">English:</div>
@@ -813,9 +943,29 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
           </div></div>
           <div class="tool-output"><div class="panel">
             <div class="panel-title">Распознавание</div>
-            <div id="mnist-result" style="font-size:68px;text-align:center;padding:10px 0;font-weight:700;color:var(--purple)">?</div>
+            <div id="mnist-result" style="font-size:68px;text-align:center;padding:10px 0;font-weight:700;color:var(--accent)">?</div>
             <div id="mnist-conf" style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px"></div>
             <div id="mnist-bars"></div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- SKETCH (DrawGuess) -->
+      <div id="sec-sketch" class="section">
+        <div class="tool-wrap">
+          <div class="tool-input"><div class="panel">
+            <div class="panel-title">🖌️ Нарисуй — угадаю</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Цифры, буквы, фигуры, предметы (кошка, дом, машина…) и математические знаки — 160 классов. Угадывает, как только отпускаешь мышь.</div>
+            <canvas id="sketch-canvas" width="400" height="400" style="display:block;width:100%;max-width:400px;aspect-ratio:1;border:2px solid var(--border);border-radius:8px;cursor:crosshair;background:#000;touch-action:none"></canvas>
+            <div class="form-group" style="margin-top:10px"><label>Толщина кисти: <span id="sketch-pen-val">24</span></label>
+              <input type="range" id="sketch-pen" min="8" max="48" value="24" oninput="document.getElementById('sketch-pen-val').textContent=this.value"></div>
+            <div class="btn-row">
+              <button class="btn btn-outline" onclick="sketchClear()">Очистить</button>
+            </div>
+          </div></div>
+          <div class="tool-output"><div class="panel">
+            <div class="panel-title">Догадки</div>
+            <div id="sketch-result" style="color:var(--muted);font-size:13px">Нарисуй что-нибудь</div>
           </div></div>
         </div>
       </div>
@@ -835,7 +985,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
           </div>
           <div class="trans-panel">
             <label id="tgt-lang-label" style="margin-bottom:5px">Русский (результат)</label>
-            <textarea id="trans-tgt" rows="7" readonly placeholder="Перевод появится здесь…" style="background:rgba(124,58,237,.04)"></textarea>
+            <textarea id="trans-tgt" rows="7" readonly placeholder="Перевод появится здесь…" style="background:rgba(var(--accent-rgb),.04)"></textarea>
           </div>
         </div>
         <div style="margin-top:14px">
@@ -982,7 +1132,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
                 <label style="margin:0">Макс. итераций</label>
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer">
                   <input type="checkbox" id="coder2-unlimited" onchange="toggleIterSlider()"
-                         style="accent-color:#7c3aed;width:14px;height:14px">
+                         style="accent-color:var(--accent);width:14px;height:14px">
                   Без ограничений
                 </label>
               </div>
@@ -1047,7 +1197,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
                 <label style="margin:0">Макс. итераций</label>
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer">
                   <input type="checkbox" id="review-unlimited" onchange="toggleReviewSlider()"
-                         style="accent-color:#7c3aed;width:14px;height:14px">
+                         style="accent-color:var(--accent);width:14px;height:14px">
                   Без ограничений
                 </label>
               </div>
@@ -1083,13 +1233,13 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
         </div>
       </div>
 
-      <!-- HOMEWORK / МЕШ -->
+      <!-- HOMEWORK / МЭШ -->
       <div id="sec-homework" class="section">
         <div class="tool-wrap">
 
           <!-- INPUT -->
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">📚 Решить тест (МЕШ)</div>
+            <div class="panel-title">📚 Решить тест (МЭШ)</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
               Вставь фото задания или введи текст — получи точный ответ
             </div>
@@ -1178,36 +1328,34 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
       <div id="sec-lm-models" class="section">
         <div class="panel">
           <div class="panel-title" style="justify-content:space-between">
-            🟢 Модели LM Studio
+            🧠 Модели для чата и кодеров
             <div style="display:flex;align-items:center;gap:8px">
-              <span id="lm-status-badge" style="font-size:12px;padding:2px 10px;border-radius:10px;background:var(--border);color:var(--muted)">Проверка...</span>
+              <span id="lm-status-badge" class="chip">Проверка...</span>
               <button class="btn btn-outline btn-sm" onclick="refreshLMModels()">↻ Обновить</button>
             </div>
           </div>
-
-          <!-- Статус сервера -->
-          <div id="lm-server-info" style="margin-bottom:16px;font-size:13px;color:var(--muted)"></div>
-
-          <!-- Загруженные модели -->
-          <div style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Загружены сейчас</div>
-          <div id="lm-loaded-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
-            <div style="color:var(--muted);font-size:13px">Загрузка...</div>
-          </div>
-
-          <!-- Роли из lm_config.json -->
-          <div style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Роли (lm_config.json)</div>
-          <div id="lm-roles-list" style="display:flex;flex-direction:column;gap:6px">
-            <div style="color:var(--muted);font-size:13px">Загрузка...</div>
-          </div>
+          <div id="lm-server-info" style="margin-bottom:14px;font-size:13px;color:var(--muted)"></div>
+          <div id="lm-roles-list" class="lm-list"><div style="color:var(--muted);font-size:13px">Загрузка...</div></div>
         </div>
 
-        <!-- Скачать модели -->
         <div class="panel" style="margin-top:16px">
-          <div class="panel-title">📥 Скачать модели в LM Studio</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:14px">
-            Нажми «Скачать» — LM Studio начнёт загрузку модели. Если API не поддерживается — скачай вручную в самом LM Studio.
+          <div class="panel-title">📦 Другие скачанные модели</div>
+          <div id="lm-others-list" class="lm-list"></div>
+        </div>
+
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-title">📥 Скачать другую модель</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+            Вставь ссылку на GGUF-модель с Hugging Face или имя из каталога LM Studio (Discover).
+            Квантование пишется после @, например
+            <code>https://huggingface.co/lmstudio-community/Qwen2.5-7B-Instruct-GGUF@Q4_K_M</code>.
+            Без @ LM Studio сам подберёт вариант под твою видеокарту. Ориентир по размеру: модель 7B в Q4_K_M весит около 4.7 ГБ и нужна видеокарта от 6 ГБ.
           </div>
-          <div id="lm-download-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div class="lm-row" style="align-items:stretch">
+            <input type="text" id="lm-spec-input" placeholder="https://huggingface.co/автор/модель-GGUF@Q4_K_M" style="flex:1">
+            <button class="btn btn-primary" onclick="lmDownload({spec: document.getElementById('lm-spec-input').value.trim()}, this)">📥 Скачать</button>
+            <div class="lm-progress" style="flex-basis:100%"></div>
+          </div>
         </div>
       </div>
 
@@ -1257,23 +1405,24 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
 
 <!-- SETUP WIZARD MODAL -->
 <div id="setup-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:520px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.5)">
-    <div style="font-size:20px;font-weight:700;margin-bottom:6px">🚀 Настройка моделей LM Studio</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Для работы чата и кодеров нужны модели. Скачайте их прямо здесь.</div>
+  <div style="background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:640px;width:92%;max-height:88vh;overflow:auto;box-shadow:0 24px 64px rgba(0,0,0,.5)">
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">🚀 Модели для чата и кодеров</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Чат, «Решить тест» и команды кодеров работают через LM Studio. Недостающие модели можно скачать прямо отсюда, остальные разделы работают и без них.</div>
 
     <div id="setup-lm-status" style="font-size:12px;margin-bottom:16px;padding:8px 12px;border-radius:6px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#f85149;display:none">
-      ⚠ LM Studio офлайн — запустите LM Studio и включите Local Server
+      ⚠ LM Studio не запущен. Открой LM Studio и включи Local Server (Developer → Start Server).
     </div>
 
-    <div id="setup-models-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px"></div>
+    <div id="setup-models-list" class="lm-list" style="margin-bottom:18px"></div>
 
     <div style="font-size:11px;color:var(--faint);margin-bottom:18px">
-      После скачивания загрузите модель в LM Studio: <b>My Models → Load</b>. Одновременно можно загрузить одну модель.
+      Загружать модели в память вручную не нужно: LM Studio сам загрузит нужную при первом запросе.
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end">
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
       <button class="btn btn-outline" onclick="closeSetupWizard()">Пропустить</button>
-      <button class="btn btn-primary" onclick="checkSetupStatus()">🔄 Проверить снова</button>
+      <button class="btn btn-outline" onclick="checkSetupStatus()">🔄 Проверить снова</button>
+      <button class="btn btn-primary" id="setup-dl-all" onclick="lmDownloadMissing(this)">📥 Скачать всё недостающее</button>
     </div>
   </div>
 </div>
@@ -1309,10 +1458,14 @@ function initBridge(callback) { callback(); }
 // НАВИГАЦИЯ
 // ═══════════════════════════════════════════════════════════
 const PAGES = {
-  dashboard:'Дашборд', math:'Математика', price:'Цена жилья', sentiment:'Тональность текста',
-  timeseries:'Прогноз продаж', gan:'Генерация цифр (GAN)', mnist:'Рисование цифр (CNN)',
-  translator:'Переводчик', gpt:'Генерация текста', chat:'Умный чат',
-  homework:'Решить тест', draw:'Генерация изображений', coder:'Команда кодеров', 'coder-v2':'Команда v2', 'code-review':'Проверка кода', 'lm-models':'Модели LM Studio', logs:'Логи сервера',
+  dashboard:'Главная', math:'Калькулятор', price:'Цена жилья', temperature:'Прогноз температуры',
+  timeseries:'Временной ряд', clustering:'Сегментация клиентов', 'clustering-docs':'Группировка документов',
+  recommender:'Рекомендации фильмов', spam:'Спам-детектор', anomaly:'Аномалии транзакций', defect:'Контроль качества',
+  ner:'Сущности (NER)', sentiment:'Тональность текста', mnist:'Рисование цифр (CNN)', sketch:'Угадай рисунок',
+  translator:'Переводчик EN↔RU', gpt:'Генерация текста', summarize:'Суммаризация', gan:'Генерация цифр (GAN)',
+  draw:'Генерация изображений', homework:'Решить тест', chat:'Умный чат', coder:'Команда кодеров',
+  'coder-v2':'Команда v2', 'code-review':'Проверка кода', 'lm-models':'Модели: скачать и удалить', logs:'Логи сервера',
+  settings:'Настройки',
 };
 
 function go(page) {
@@ -1337,21 +1490,23 @@ function go(page) {
 // ═══════════════════════════════════════════════════════════
 // СТАТУС
 // ═══════════════════════════════════════════════════════════
+const MODEL_GROUPS = ['Текст', 'Картинки', 'Данные и прогнозы'];
 const MODEL_META = {
-  gpt:        {icon:'📝', name:'GPT Генератор',     desc:'Языковая модель BPE',  sec:'gpt'},
-  mnist:      {icon:'✏️', name:'MNIST CNN',          desc:'Распознавание цифр',   sec:'mnist'},
-  sentiment:  {icon:'💬', name:'Тональность',        desc:'Bidirectional LSTM',   sec:'sentiment'},
-  translator: {icon:'🌐', name:'Переводчик EN↔RU',  desc:'Transformer BPE',      sec:'translator'},
-  gan:        {icon:'🎨', name:'GAN Генератор',      desc:'Условная DCGAN',       sec:'gan'},
-  price:       {icon:'🏠', name:'Цена жилья',          desc:'MLP регрессия',        sec:'price'},
-  timeseries:  {icon:'📈', name:'Прогноз продаж',      desc:'LSTM + Attention',     sec:'timeseries'},
-  temperature: {icon:'🌡️', name:'Температура',          desc:'MLP регрессия (погода)',  sec:'temperature'},
-  spam:        {icon:'🚫', name:'Спам-детектор',        desc:'Bidirectional LSTM',     sec:'spam'},
-  clustering:  {icon:'🫧', name:'Кластеризация',        desc:'Autoencoder + K-Means',  sec:'clustering'},
-  anomaly:     {icon:'💳', name:'Аномалии транзакций',  desc:'Autoencoder (аномалии)', sec:'anomaly'},
-  defect:      {icon:'🏭', name:'Контроль качества',    desc:'DefectNet MLP',          sec:'defect'},
-  ner:         {icon:'🏷️', name:'NER (сущности)',        desc:'Bi-LSTM тегер',           sec:'ner'},
-  recommender: {icon:'🎬', name:'Рекомендации',          desc:'Neural Collaborative Filtering', sec:'recommender'},
+  translator:  {icon:'🌐', name:'Переводчик EN↔RU',     desc:'Трансформер, 800 тыс. пар фраз',   sec:'translator',  group:'Текст'},
+  sentiment:   {icon:'💬', name:'Тональность',          desc:'BiLSTM, отзывы RuReviews',          sec:'sentiment',   group:'Текст'},
+  spam:        {icon:'🚫', name:'Спам-детектор',        desc:'BiLSTM, SMS на русском и английском', sec:'spam',      group:'Текст'},
+  ner:         {icon:'🏷️', name:'Имена, места, даты',    desc:'BiLSTM + символьная CNN, WikiANN',  sec:'ner',         group:'Текст'},
+  gpt:         {icon:'📝', name:'Генерация текста',     desc:'Мини-GPT с BPE',                    sec:'gpt',         group:'Текст'},
+  sketch:      {icon:'🖌️', name:'Угадай рисунок',        desc:'CNN, 160 классов',                  sec:'sketch',      group:'Картинки'},
+  mnist:       {icon:'✏️', name:'Распознавание цифр',   desc:'ResNet, MNIST',                     sec:'mnist',       group:'Картинки'},
+  gan:         {icon:'🎨', name:'Цифры (GAN)',          desc:'Условная DCGAN',                    sec:'gan',         group:'Картинки'},
+  price:       {icon:'🏢', name:'Цена жилья',           desc:'MLP-регрессия',                     sec:'price',       group:'Данные и прогнозы'},
+  temperature: {icon:'🌡️', name:'Температура',          desc:'MLP-регрессия по погоде',           sec:'temperature', group:'Данные и прогнозы'},
+  timeseries:  {icon:'📈', name:'Прогноз продаж',       desc:'LSTM + внимание',                   sec:'timeseries',  group:'Данные и прогнозы'},
+  clustering:  {icon:'👥', name:'Сегментация клиентов', desc:'Автоэнкодер + K-Means',             sec:'clustering',  group:'Данные и прогнозы'},
+  recommender: {icon:'🎬', name:'Рекомендации фильмов', desc:'Нейронная коллаборативная фильтрация', sec:'recommender', group:'Данные и прогнозы'},
+  anomaly:     {icon:'💳', name:'Аномалии транзакций',  desc:'Автоэнкодер',                       sec:'anomaly',     group:'Данные и прогнозы'},
+  defect:      {icon:'🏭', name:'Контроль качества',    desc:'MLP-классификатор',                 sec:'defect',      group:'Данные и прогнозы'},
 };
 
 async function loadStatus() {
@@ -1382,7 +1537,7 @@ async function loadStatus() {
           const mdls = lmMdls.models || [];
           lmNav.innerHTML = mdls.length
             ? `<div style="font-size:10px;color:var(--faint);padding:4px 10px 2px;text-transform:uppercase;letter-spacing:.5px">LM Studio</div>`+
-              mdls.slice(0,5).map(m=>`<div style="padding:3px 10px 3px 26px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m}">🟢 ${m}</div>`).join('')
+              mdls.slice(0,5).map(m=>`<div style="padding:3px 10px 3px 26px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(m)}">🟢 ${esc(m)}</div>`).join('')
             : `<div style="padding:3px 10px;font-size:11px;color:var(--faint)">Нет загруженных моделей</div>`;
         } catch(e) { lmNav.innerHTML=''; }
       } else {
@@ -1392,6 +1547,9 @@ async function loadStatus() {
     let avail = 0;
     const grid = document.getElementById('model-cards');
     const torchOk = s.torch_available !== false;
+    const sig = JSON.stringify([s.models, torchOk]);
+    if (grid.dataset.sig === sig) return;
+    grid.dataset.sig = sig;
     grid.innerHTML = '';
     if (!torchOk) {
       grid.insertAdjacentHTML('beforeend',
@@ -1400,20 +1558,23 @@ async function loadStatus() {
           ⚠ <span>PyTorch не установлен — локальные нейросети недоступны. LM Studio функции работают в полном объёме.</span>
         </div>`);
     }
-    for (const [key, meta] of Object.entries(MODEL_META)) {
-      const fileOk = s.models[key];
-      const ok = fileOk && torchOk;
-      if (ok) avail++;
-      const pill = !torchOk
-        ? `<span class="status-pill" style="background:rgba(139,148,158,.15);color:var(--muted)">Нет PyTorch</span>`
-        : `<span class="status-pill ${fileOk?'pill-ok':'pill-miss'}">${fileOk?'✓ Готова':'✗ Нет файла'}</span>`;
-      grid.innerHTML += `<div class="card"><div class="card-header">
-        <span class="card-icon">${meta.icon}</span>
-        <div><div class="card-title">${meta.name}</div><div class="card-desc">${meta.desc}</div></div>
-        ${pill}
-      </div><div style="display:flex;gap:6px;margin-top:8px">
-        <button class="go-btn" style="flex:1" onclick="go('${meta.sec}')">Открыть →</button>
-      </div></div>`;
+    for (const group of MODEL_GROUPS) {
+      grid.insertAdjacentHTML('beforeend', `<div class="group-title">${group}</div><div class="grid grid-cards"></div>`);
+      const box = grid.lastElementChild;
+      for (const [key, meta] of Object.entries(MODEL_META)) {
+        if (meta.group !== group) continue;
+        const fileOk = s.models[key];
+        const ok = fileOk && torchOk;
+        if (ok) avail++;
+        const pill = !torchOk
+          ? `<span class="status-pill" style="background:rgba(139,148,158,.15);color:var(--muted)">Нет PyTorch</span>`
+          : `<span class="status-pill ${fileOk?'pill-ok':'pill-miss'}">${fileOk?'✓ Готова':'✗ Нет файла'}</span>`;
+        box.insertAdjacentHTML('beforeend', `<div class="card" onclick="go('${meta.sec}')" style="cursor:pointer"><div class="card-header">
+          <span class="card-icon">${meta.icon}</span>
+          <div style="min-width:0"><div class="card-title">${meta.name}</div><div class="card-desc">${meta.desc}</div>
+          <div style="margin-top:8px">${pill}</div></div>
+        </div></div>`);
+      }
     }
     document.getElementById('stat-models').textContent = avail + '/' + Object.keys(MODEL_META).length;
   } catch(e) {}
@@ -1433,6 +1594,13 @@ function toast(msg, type='') {
 
 async function* streamSSE(url, body, opts={}) {
   const resp = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:opts.signal||null});
+  // Ошибки ввода сервер отдаёт обычным JSON, а не потоком — превращаем их в событие-ошибку
+  if (!(resp.headers.get('Content-Type') || '').includes('event-stream')) {
+    const d = await resp.json().catch(() => ({}));
+    const msg = d.error || `Ошибка сервера ${resp.status}`;
+    yield {error: msg, type: 'error', text: msg};
+    return;
+  }
   const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf = '';
   try {
     while (true) {
@@ -1462,7 +1630,7 @@ async function solveMath() {
   try {
     const d = await fetch('/api/math/solve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expression:expr})}).then(r=>r.json());
     if (d.error){res.style.color='var(--red)';res.textContent=d.error;return;}
-    res.style.color='var(--purple)'; res.textContent=d.result;
+    res.style.color='var(--accent)'; res.textContent=d.result;
     mathHistory.unshift({expr,res:d.result});
     document.getElementById('math-history').innerHTML = mathHistory.slice(0,10).map((h, i) =>
       `<div class="hist-row"><span class="hist-expr">${esc(h.expr)} =</span><span class="hist-res">${esc(h.res)}</span>
@@ -1482,7 +1650,7 @@ async function predictPrice() {
   try {
     const d=await fetch('/api/price/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
     if(d.error){res.style.color='var(--red)';res.textContent=d.error;return;}
-    res.style.color='var(--purple)'; res.textContent=d.price_str;
+    res.style.color='var(--accent)'; res.textContent=d.price_str;
     const dn=['окраина','спальный','средний','близко к центру','центр'];
     document.getElementById('price-detail').textContent=`${body.area}м² · ${body.rooms}комн · ${body.floor}эт · ${dn[body.district]} · ${body.age}лет`;
     const sq=(d.price/body.area*1000).toFixed(0);
@@ -1624,7 +1792,7 @@ async function clusterCustomer(){
     if(d.error){toast(d.error,'err');return;}
     const seg=d.segment;
     document.getElementById('cl-emoji').textContent=_clEmojis[seg]||'👤';
-    const lbl=document.getElementById('cl-label'); lbl.textContent=seg; lbl.style.color=_clColors[seg]||'var(--purple)';
+    const lbl=document.getElementById('cl-label'); lbl.textContent=seg; lbl.style.color=_clColors[seg]||'var(--accent)';
     document.getElementById('cl-rec').textContent='💡 '+d.rec;
   }catch(e){toast('Ошибка: '+e,'err');}
 }
@@ -1669,7 +1837,7 @@ function recToggle(name, el){
   } else {
     _recSelected.add(name);
     if(cb)cb.textContent='☑';
-    el.style.background='rgba(124,58,237,.1)';
+    el.style.background='rgba(var(--accent-rgb),.1)';
   }
   _updateRecSelected();
 }
@@ -1678,7 +1846,7 @@ function _updateRecSelected(){
   const arr=[..._recSelected];
   document.getElementById('rec-count').textContent=arr.length;
   document.getElementById('rec-selected').innerHTML=arr.length
-    ?arr.map(n=>`<span style="display:inline-block;background:rgba(124,58,237,.15);border:1px solid var(--purple);border-radius:10px;padding:1px 8px;margin:2px;font-size:11px">${n}</span>`).join('')
+    ?arr.map(n=>`<span style="display:inline-block;background:rgba(var(--accent-rgb),.15);border:1px solid var(--accent);border-radius:10px;padding:1px 8px;margin:2px;font-size:11px">${n}</span>`).join('')
     :'<span style="color:var(--muted)">Ничего не выбрано</span>';
 }
 
@@ -1690,7 +1858,7 @@ function recQuick(genre){
   });
   _recSelected.forEach(name=>{
     const cb=document.getElementById('rec-cb-'+name.replace(/[^a-zA-Z]/g,'_'));
-    if(cb){cb.textContent='☑';cb.parentElement.style.background='rgba(124,58,237,.1)';}
+    if(cb){cb.textContent='☑';cb.parentElement.style.background='rgba(var(--accent-rgb),.1)';}
   });
   _updateRecSelected();
 }
@@ -1886,6 +2054,8 @@ const _spamExamples={
   ham1: 'Hi, can we schedule a meeting tomorrow at 3pm to discuss the quarterly report?',
   spam2:'Earn money fast from home! No experience needed. Join our exclusive program today free!',
   ham2: 'Please find the attached document and let me know if you have any questions or feedback.',
+  spam_ru:'Поздравляем! Вы выиграли iPhone. Перейдите по ссылке, чтобы забрать приз!',
+  ham_ru: 'Привет, завтра встречаемся в три у метро?',
 };
 function setSpamEx(k){document.getElementById('spam-input').value=_spamExamples[k]||'';}
 
@@ -1936,7 +2106,7 @@ async function summarizeText(){
     if(d.error){toast(d.error,'err');res.innerHTML='';return;}
     const allSents=d.sentences; const selSet=new Set(d.selected);
     res.innerHTML=allSents.map((s,i)=>selSet.has(i)
-      ?`<span style="background:rgba(124,58,237,.15);border-left:3px solid var(--purple);padding:2px 6px;border-radius:3px;margin:2px 0;display:inline">${esc(s)}</span> `
+      ?`<span style="background:rgba(var(--accent-rgb),.15);border-left:3px solid var(--accent);padding:2px 6px;border-radius:3px;margin:2px 0;display:inline">${esc(s)}</span> `
       :`<span style="color:var(--faint)">${esc(s)}</span> `).join('');
     const origWords=text.split(/\s+/).length;
     const sumWords=d.summary.split(/\s+/).length;
@@ -2028,6 +2198,46 @@ async function generateGAN(){
   canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;},{passive:false});
   canvas.addEventListener('touchend',()=>{drawing=false;last=null;});
 })();
+
+// ── Угадай рисунок ──
+(function initSketch(){
+  const c = document.getElementById('sketch-canvas'), ctx = c.getContext('2d');
+  let drawing = false, last = null;
+  const pos = e => { const r = c.getBoundingClientRect(), p = e.touches ? e.touches[0] : e;
+    return {x: (p.clientX - r.left) * c.width / r.width, y: (p.clientY - r.top) * c.height / r.height}; };
+  const start = e => { e.preventDefault(); drawing = true; last = pos(e); stroke(last); };
+  const stroke = p => { ctx.strokeStyle = '#fff'; ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.lineWidth = +document.getElementById('sketch-pen').value;
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; };
+  const move = e => { if (!drawing) return; e.preventDefault(); stroke(pos(e)); };
+  const end = () => { if (!drawing) return; drawing = false; last = null; sketchPredict(); };
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, c.width, c.height);
+  c.addEventListener('mousedown', start); c.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  c.addEventListener('touchstart', start, {passive: false}); c.addEventListener('touchmove', move, {passive: false});
+  c.addEventListener('touchend', end);
+})();
+
+function sketchClear(){
+  const c = document.getElementById('sketch-canvas'), ctx = c.getContext('2d');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, c.width, c.height);
+  document.getElementById('sketch-result').textContent = 'Нарисуй что-нибудь';
+}
+
+async function sketchPredict(){
+  const res = document.getElementById('sketch-result');
+  try {
+    const d = await fetch('/api/sketch/predict', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({image: document.getElementById('sketch-canvas').toDataURL('image/png'), top: 8})}).then(r => r.json());
+    if (d.error) { res.textContent = d.error; return; }
+    const sure = d.guesses.filter(g => g.prob >= 30), unsure = d.guesses.filter(g => g.prob < 30 && g.prob >= 2);
+    const row = g => `<div class="digit-conf"><span style="width:auto;min-width:90px;text-align:left;color:var(--text);font-size:14px">${esc(g.label)}</span>
+      <div class="bar"><div class="bar-fill" style="width:${g.prob}%"></div></div><span>${g.prob}%</span></div>`;
+    res.innerHTML = (sure.length ? `<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Думаю, это:</div>${sure.map(row).join('')}` : '')
+      + (unsure.length ? `<div style="font-size:12px;color:var(--muted);margin:12px 0 6px">Не уверен:</div>${unsure.map(row).join('')}` : '')
+      || 'Не пойму, что это';
+  } catch (e) { res.textContent = 'Ошибка: ' + e; }
+}
 
 function mnistClear(){const c=document.getElementById('mnist-canvas');c.getContext('2d').fillStyle='#000';c.getContext('2d').fillRect(0,0,280,280);document.getElementById('mnist-result').textContent='?';document.getElementById('mnist-conf').textContent='';document.getElementById('mnist-bars').innerHTML='';}
 
@@ -2123,9 +2333,18 @@ let chatImage=null,chatStreaming=false;
 let _lmOnline = false;
 // Сырой HTML из ответа модели показываем как текст, а не исполняем
 if (window.marked) marked.use({renderer: {html(h) { return esc(typeof h === 'string' ? h : h.text); }}});
+const MATH_RE = /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\s$](?:[^$\n]*?[^\s$])?\$/g;
 function renderMd(el, text) {
-  // Markdown + LaTeX рендеринг
-  el.innerHTML = window.marked ? marked.parse(text) : esc(text).replace(/\n/g, '<br>');
+  // Markdown + LaTeX. Формулы прячем от marked: он считает «\[» экранированием и съедает обратный слеш,
+  // после чего KaTeX уже не видит «\[ 10 \times 10 \]» и в чате остаются голые скобки
+  const math = [];
+  const safe = text.replace(MATH_RE, m => `@@MATH${math.push(m) - 1}@@`);
+  let html = window.marked ? marked.parse(safe) : esc(safe).replace(/\n/g, '<br>');
+  html = html.replace(/@@MATH(\d+)@@/g, (_, i) => esc(math[+i]));
+  // Размышления R1 внутри сообщения (details) не трогаем — перерисовываем только ответ
+  const think = el.querySelector(':scope > .think');
+  el.innerHTML = html;
+  if (think) el.prepend(think);
   if (window._katexReady) {
     renderMathInElement(el, {delimiters:[
       {left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},
@@ -2156,7 +2375,7 @@ function _saveSessions(sessions) {
   try { localStorage.setItem(SESS_KEY, JSON.stringify(sessions)); } catch(e) {}
 }
 
-function newChatSession() {
+function newChatSession(open = true) {
   _saveCurrentSession(); // сохраняем текущую перед созданием новой
   const id = Date.now().toString();
   const sessions = _getSessions();
@@ -2165,7 +2384,7 @@ function newChatSession() {
   _curSessId = id;
   document.getElementById('chat-messages').innerHTML = '';
   renderSessionList();
-  go('chat');
+  if (open) go('chat');
 }
 
 function switchSession(id) {
@@ -2206,9 +2425,10 @@ function deleteSession(id, e) {
   let sessions = _getSessions().filter(s => s.id !== id);
   _saveSessions(sessions);
   if (_curSessId === id) {
-    _curSessId = sessions[0]?.id || null;
+    _curSessId = null;
     document.getElementById('chat-messages').innerHTML = '';
-    if (_curSessId) switchSession(_curSessId);
+    // Без активной сессии новые сообщения никуда бы не сохранялись
+    if (sessions.length) switchSession(sessions[0].id); else newChatSession(false);
   }
   renderSessionList();
 }
@@ -2245,7 +2465,7 @@ function renderSessionList() {
     `<div class="nav-item chat-sess-item ${s.id===_curSessId?'active':''}" onclick="switchSession('${s.id}')"
       style="padding-left:28px;font-size:12px;position:relative">
       <span class="icon">💬</span>
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.title}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.title)}</span>
       <span onclick="renameSession('${s.id}',event)" style="opacity:.5;padding:0 3px;cursor:pointer" title="Переименовать">✏</span>
       <span onclick="deleteSession('${s.id}',event)" style="opacity:.5;padding:0 4px;cursor:pointer" title="Удалить">✕</span>
     </div>`
@@ -2257,8 +2477,8 @@ function saveHistory() { _saveCurrentSession(); renderSessionList(); }
 function loadHistory() {
   const sessions = _getSessions();
   if (sessions.length === 0) {
-    // Первый запуск — создаём сессию
-    newChatSession();
+    // Первый запуск — создаём сессию, но раздел не переключаем
+    newChatSession(false);
     return;
   }
   _curSessId = sessions[0].id;
@@ -2304,6 +2524,7 @@ async function sendChat(){
   const LANG_SUFFIX={ru:' (Отвечай на русском языке.)',en:' (Reply in English.)',de:' (Antworte auf Deutsch.)',zh:' (请用中文回答。)'};
   const fullMsg=msg+(lang&&LANG_SUFFIX[lang]?LANG_SUFFIX[lang]:'');
   input.value='';
+  const history=chatHistory();
   const userEl=addMsg('user',msg);
   if(chatImage){
     const img=document.createElement('img');
@@ -2312,27 +2533,47 @@ async function sendChat(){
   }
   chatStreaming=true;document.getElementById('chat-send-btn').disabled=true;
   document.getElementById('chat-stop-btn').style.display='inline-flex';
-  const body={message:fullMsg,model:document.getElementById('chat-model-sel').value};
+  const body={message:fullMsg,model:document.getElementById('chat-model-sel').value,history};
   if(chatImage){body.image=chatImage;chatImage=null;document.getElementById('chat-img-preview').innerHTML='';}
-  let botEl=null,fullText='';
+  let botEl=null,fullText='',thinkEl=null,thinkText='',answerEl=null;
+  const ensureBot=()=>{if(!botEl){botEl=addMsg('bot','');answerEl=document.createElement('div');botEl.appendChild(answerEl);}};
   try{
     for await(const evt of streamSSE('/api/chat',body)){
       if(evt.type==='model'){document.getElementById('chat-model-badge').textContent=evt.text;}
+      else if(evt.type==='think'){
+        ensureBot();
+        if(!thinkEl){
+          thinkEl=document.createElement('details');thinkEl.className='think';
+          thinkEl.innerHTML='<summary>💭 Думает…</summary><div class="think-body"></div>';
+          botEl.insertBefore(thinkEl,answerEl);
+        }
+        thinkText+=evt.text;
+        thinkEl.querySelector('.think-body').textContent=thinkText;
+        document.getElementById('chat-messages').scrollTop=99999;
+      }
       else if(evt.type==='token'){
-        if(!botEl){botEl=addMsg('bot','');}
+        ensureBot();
+        if(thinkEl)thinkEl.querySelector('summary').textContent='💭 Размышления';
         fullText+=evt.text;
-        botEl.textContent=fullText;
+        answerEl.textContent=fullText;
         document.getElementById('chat-messages').scrollTop=99999;
       }
       else if(evt.type==='error'){toast(evt.text,'err');if(!botEl)addMsg('bot','❌ '+evt.text);}
       else if(evt.type==='done')break;
     }
   }catch(e){toast('Ошибка: '+e,'err');}
-  if(botEl&&fullText) renderMd(botEl,fullText);
+  if(botEl&&fullText){botEl.dataset.raw=fullText;renderMd(botEl,fullText);}
   chatStreaming=false;
   document.getElementById('chat-send-btn').disabled=false;
   document.getElementById('chat-stop-btn').style.display='none';
   saveHistory();
+}
+// Прошлые реплики текущего чата для контекста модели (сервер сам обрежет по длине)
+function chatHistory(){
+  return [...document.querySelectorAll('#chat-messages .msg')]
+    .map(el=>({role:el.classList.contains('msg-user')?'user':'assistant', content:(el.dataset.raw||el.innerText||'').trim()}))
+    .filter(m=>m.content&&!m.content.startsWith('❌'))
+    .slice(-16);
 }
 function stopChat(){fetch('/api/stop',{method:'POST'});}
 function clearChat(){
@@ -2432,10 +2673,10 @@ async function runCoderV2() {
       let m;
       if ((m = line.match(ITER_RE))) { curIter = parseInt(m[1]); addIterRow(curIter); }
       if (curIter > 0) {
-        if (REV_OK_RE.test(line)) document.getElementById(`iter-rev-${curIter}`).style.cssText+='background:#1a3a1a;color:#3fb950';
-        if (REV_NO_RE.test(line)) document.getElementById(`iter-rev-${curIter}`).style.cssText+='background:#3a1a1a;color:#f85149';
-        if (TST_OK_RE.test(line)) document.getElementById(`iter-tst-${curIter}`).style.cssText+='background:#1a3a1a;color:#3fb950';
-        if (TST_NO_RE.test(line)) document.getElementById(`iter-tst-${curIter}`).style.cssText+='background:#3a1a1a;color:#f85149';
+        if (REV_OK_RE.test(line)) document.getElementById(`iter-rev-${curIter}`).style.cssText+='background:rgba(63,185,80,.15);color:var(--green)';
+        if (REV_NO_RE.test(line)) document.getElementById(`iter-rev-${curIter}`).style.cssText+='background:rgba(248,81,73,.15);color:var(--red)';
+        if (TST_OK_RE.test(line)) document.getElementById(`iter-tst-${curIter}`).style.cssText+='background:rgba(63,185,80,.15);color:var(--green)';
+        if (TST_NO_RE.test(line)) document.getElementById(`iter-tst-${curIter}`).style.cssText+='background:rgba(248,81,73,.15);color:var(--red)';
         if (DONE_RE.test(line)) {
           const res = document.getElementById(`iter-res-${curIter}`);
           if (res) { res.textContent = '✓ Готово'; res.style.color = '#3fb950'; }
@@ -2496,7 +2737,6 @@ function copyReviewCode() {
   navigator.clipboard ? navigator.clipboard.writeText(text).then(()=>toast('Скопировано!','ok')) : _copyFallback(text);
 }
 
-let _reviewEs = null;
 async function runCodeReview() {
   const code = document.getElementById('review-code').value.trim();
   const task = document.getElementById('review-task').value.trim();
@@ -2512,8 +2752,6 @@ async function runCodeReview() {
   document.getElementById('review-code-panel').style.display = 'none';
   document.getElementById('review-controls').style.display = 'block';
 
-  if (_reviewEs) { _reviewEs.close(); _reviewEs = null; }
-
   const resp = await fetch('/api/coder_team_v2/review', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -2526,9 +2764,7 @@ async function runCodeReview() {
     return;
   }
 
-  _reviewEs = new EventSource('/api/coder_team_v2/review_stream');
-
-  // Используем fetch + ReadableStream вместо SSE (т.к. SSE требует GET)
+  // Ответ POST уже поток SSE — читаем его через fetch + ReadableStream (EventSource умеет только GET)
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buf = '';
@@ -2611,58 +2847,14 @@ let _setupShown = false;
 
 async function checkSetupStatus() {
   try {
-    const d = await fetch('/api/lm/setup_check').then(r => r.json());
-    const modal   = document.getElementById('setup-modal');
-    const lmWarn  = document.getElementById('setup-lm-status');
-    const list    = document.getElementById('setup-models-list');
-
-    // Если все модели скачаны (или загружены) — закрываем мастер и сбрасываем dismiss
-    const allReady = d.online && (d.required || []).every(m => m.downloaded || m.loaded);
-    if (allReady) { localStorage.removeItem('setupDismissed'); closeSetupWizard(); return; }
-
-    // Показываем
-    modal.style.display = 'flex';
-    lmWarn.style.display = d.online ? 'none' : 'block';
-
-    list.innerHTML = (d.required || []).map(m => {
-      const short = m.model_id.split('/').pop().replace('.gguf','');
-      const archBadge = m.arch ? `<span style="background:${m.arch_color};color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px">${m.arch}</span>` : '';
-      let status, btn;
-      if (m.loaded) {
-        status = `<span style="color:#3fb950;font-weight:600;font-size:12px;white-space:nowrap">✓ Загружена</span>`;
-        btn = '';
-      } else if (m.downloaded) {
-        status = `<span style="color:#e3b341;font-weight:600;font-size:12px;white-space:nowrap">⬇ Скачана</span>`;
-        btn = `<span style="font-size:11px;color:var(--faint);white-space:nowrap">загрузи в LM Studio</span>`;
-      } else {
-        status = `<span style="color:var(--muted);font-size:12px;white-space:nowrap">✗ Нет</span>`;
-        btn = `<span style="font-size:11px;color:var(--faint);white-space:nowrap">скачай в LM Studio</span>`;
-      }
-      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surf2);border-radius:8px;border:1px solid var(--border)">
-        <div style="font-size:18px;width:28px;text-align:center">${m.icon||'🤖'}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600">${m.icon ? '' : ''}${m.role_name}</div>
-          <div style="font-size:11px;color:var(--faint);margin-top:2px">${archBadge}${m.publisher ? `<span style="color:var(--muted)">${m.publisher}</span> · ` : ''}<span style="font-family:monospace">${short}</span></div>
-          ${m.size ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">💾 ${m.size}</div>` : ''}
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">${status}${btn}</div>
-      </div>`;
-    }).join('');
-  } catch(e) {}
-}
-
-function setupDownload(modelId, btn) {
-  const short = modelId.split('/').pop().replace('.gguf','');
-  // LM Studio не поддерживает API скачивания — показываем инструкцию
-  const row = btn.closest('div');
-  btn.style.display = 'none';
-  if (!row.querySelector('.manual-hint')) {
-    const hint = document.createElement('div');
-    hint.className = 'manual-hint';
-    hint.style.cssText = 'font-size:11px;color:#e3b341;line-height:1.5;margin-top:2px';
-    hint.innerHTML = `LM Studio → <b>Discover</b> → найди <b>${short}</b> → Download`;
-    row.appendChild(hint);
-  }
+    const d = await fetch('/api/lm/catalog').then(r => r.json());
+    const missing = d.roles.filter(r => r.downloaded === false);
+    if (d.online && !missing.length) { localStorage.removeItem('setupDismissed'); closeSetupWizard(); return; }
+    document.getElementById('setup-modal').style.display = 'flex';
+    document.getElementById('setup-lm-status').style.display = d.online ? 'none' : 'block';
+    document.getElementById('setup-dl-all').style.display = missing.length && d.lms ? '' : 'none';
+    document.getElementById('setup-models-list').innerHTML = d.roles.map(lmRoleRow).join('');
+  } catch (e) {}
 }
 
 function closeSetupWizard() {
@@ -2671,137 +2863,153 @@ function closeSetupWizard() {
   localStorage.setItem('setupDismissed', '1');
 }
 
-// Показываем мастер при переходе в разделы требующие LM Studio
+// Показываем мастер при переходе в разделы, которым нужен LM Studio
 function maybeShowSetup() {
   if (_setupShown || localStorage.getItem('setupDismissed')) return;
   checkSetupStatus();
 }
 
+function lmChips(m) {
+  return [m.params, m.quant, m.size_gb != null ? `${m.size_gb} ГБ` : '', m.vision ? '👁 видит картинки' : '']
+    .filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join('');
+}
+
+function lmStatus(m) {
+  if (m.loaded) return '<span class="chip chip-green">● в памяти</span>';
+  if (m.downloaded) return '<span class="chip chip-blue">✓ скачана</span>';
+  if (m.downloaded === false) return '<span class="chip chip-red">не скачана</span>';
+  return '';
+}
+
+function lmButtons(m, role) {
+  const k = m.key ? `data-key="${esc(m.key)}"` : '';
+  const b = [];
+  if (m.downloaded === false && role) b.push(`<button class="btn btn-primary btn-sm lm-dl" data-role="${esc(role)}" onclick="lmDownload({role: this.dataset.role}, this)">📥 Скачать</button>`);
+  if (m.key && !m.loaded && m.type !== 'embedding') b.push(`<button class="btn btn-outline btn-sm" ${k} onclick="lmAction('load', this)" title="Загрузить в видеопамять заранее">▶ В память</button>`);
+  if (m.key && m.loaded) b.push(`<button class="btn btn-outline btn-sm" ${k} onclick="lmAction('unload_one', this)" title="Освободить видеопамять">⏏ Выгрузить</button>`);
+  if (m.key && m.deletable) b.push(`<button class="btn btn-danger btn-sm" ${k} data-size="${m.size_gb || 0}" onclick="lmDelete(this)" title="Удалить с диска">🗑</button>`);
+  return b.join('');
+}
+
+function lmRoleRow(r) {
+  return `<div class="lm-row">
+    <div class="lm-icon">${ROLE_ICONS[r.role] || '🤖'}</div>
+    <div class="lm-main">
+      <div class="lm-title">${esc(r.title)} ${lmStatus(r)}</div>
+      ${r.about ? `<div class="lm-about">${esc(r.about)}</div>` : ''}
+      <div class="lm-meta">${lmChips(r)}<span class="lm-repo" title="Так модель ищется в LM Studio → Discover">${esc(r.publisher)}/${esc(r.repo)}</span></div>
+      <div class="lm-progress"></div>
+    </div>
+    <div class="lm-actions">${lmButtons(r, r.role)}</div>
+  </div>`;
+}
+
+function lmOtherRow(m) {
+  return `<div class="lm-row">
+    <div class="lm-icon">${m.type === 'embedding' ? '🔢' : m.vision ? '👁' : '💬'}</div>
+    <div class="lm-main">
+      <div class="lm-title">${esc(m.name)} ${lmStatus({...m, downloaded: true})}</div>
+      <div class="lm-meta">${lmChips(m)}<span class="lm-repo">${esc(m.key)}</span></div>
+    </div>
+    <div class="lm-actions">${lmButtons({...m, downloaded: true})}</div>
+  </div>`;
+}
+
 async function refreshLMModels() {
-  const badge    = document.getElementById('lm-status-badge');
-  const info     = document.getElementById('lm-server-info');
-  const loaded   = document.getElementById('lm-loaded-list');
-  const roles    = document.getElementById('lm-roles-list');
-  badge.textContent = 'Проверка...';
-
+  const badge = document.getElementById('lm-status-badge');
+  const info  = document.getElementById('lm-server-info');
+  const roles = document.getElementById('lm-roles-list');
+  const others = document.getElementById('lm-others-list');
+  badge.textContent = 'Проверка...'; badge.className = 'chip';
   try {
-    const [mdlResp, cfgResp] = await Promise.all([
-      fetch('/api/lm/models').then(r=>r.json()),
-      fetch('/api/status').then(r=>r.json()),
-    ]);
-
-    const models = mdlResp.models || [];
-    const lmOnline = mdlResp.online !== false && models.length >= 0;
-
-    if (mdlResp.error && models.length === 0) {
-      badge.textContent = 'Офлайн';
-      badge.style.cssText = 'font-size:12px;padding:2px 10px;border-radius:10px;background:rgba(248,81,73,.15);color:#f85149';
-      info.textContent = 'LM Studio не запущена. Откройте LM Studio → Local Server → Start Server.';
-      loaded.innerHTML = '<div style="color:var(--faint);font-size:13px">Нет данных</div>';
-      return;
-    }
-
-    badge.textContent = `Онлайн · ${models.length} моделей`;
-    badge.style.cssText = 'font-size:12px;padding:2px 10px;border-radius:10px;background:rgba(63,185,80,.15);color:#3fb950';
-    info.innerHTML = `<span style="color:var(--text)">http://localhost:1234</span> &nbsp;·&nbsp; ${models.length} загружено`;
-
-    // Загруженные модели
-    loaded.innerHTML = models.length
-      ? models.map(m => `
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
-            <div style="width:8px;height:8px;border-radius:50%;background:#3fb950;flex-shrink:0"></div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shortModelName(m)}</div>
-              <div style="font-size:11px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m}">${m}</div>
-            </div>
-          </div>`).join('')
-      : '<div style="color:var(--muted);font-size:13px;padding:10px">Нет загруженных моделей</div>';
-
-    // Роли из конфига
-    const roleResp = await fetch('/api/lm/config').then(r=>r.json()).catch(()=>null);
-    const cfgModels = roleResp?.models || {};
-    const loadedSet = new Set(models);
-
-    if (Object.keys(cfgModels).length) {
-      roles.innerHTML = Object.entries(cfgModels).map(([role, info]) => {
-        const mid = info.model_id || '';
-        const active = [...loadedSet].some(m => m.includes(mid.split('/').pop().replace('.gguf','')));
-        const icon   = ROLE_ICONS[role] || '🔷';
-        const rname  = ROLE_NAMES[role] || role;
-        return `
-          <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
-            <span style="font-size:16px">${icon}</span>
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:13px;font-weight:600">${rname}</span>
-                <span style="font-size:10px;padding:1px 6px;border-radius:8px;background:${active?'rgba(63,185,80,.15)':'var(--border)'};color:${active?'#3fb950':'var(--faint)'}">${active?'загружена':'не загружена'}</span>
-              </div>
-              <div style="font-size:11px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${mid}">${shortModelName(mid)}</div>
-            </div>
-          </div>`;
-      }).join('');
-    } else {
-      roles.innerHTML = '<div style="color:var(--faint);font-size:13px">lm_config.json не найден</div>';
-    }
-
-    // Панель скачивания
-    const dlList = document.getElementById('lm-download-list');
-    if (dlList && Object.keys(cfgModels).length) {
-      dlList.innerHTML = Object.entries(cfgModels).map(([role, info]) => {
-        const mid  = info.model_id || '';
-        if (!mid) return '';
-        const icon  = ROLE_ICONS[role] || '🔷';
-        const rname = ROLE_NAMES[role] || role;
-        const short = shortModelName(mid);
-        const isLoaded = [...loadedSet].some(m => m.includes(mid.split('/').pop().replace('.gguf','')));
-        return `
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
-            <span>${icon}</span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:600">${rname} — ${short}</div>
-              <div style="font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${mid}">${mid}</div>
-            </div>
-            ${isLoaded
-              ? `<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(63,185,80,.15);color:#3fb950">Загружена</span>`
-              : `<span style="font-size:11px;color:var(--faint)">скачай в LM Studio</span>`}
-          </div>`;
-      }).join('');
-    }
-
-  } catch(e) {
+    const d = await fetch('/api/lm/catalog').then(r => r.json());
+    badge.textContent = d.online ? 'LM Studio онлайн' : 'LM Studio офлайн';
+    badge.className = 'chip ' + (d.online ? 'chip-green' : 'chip-red');
+    const count = d.roles.filter(r => r.downloaded).length + d.others.length;
+    info.innerHTML = !d.lms
+      ? 'Не найдена утилита <code>lms</code>: установи LM Studio и запусти его хотя бы раз, тогда модели можно будет ставить отсюда.'
+      : `Скачано моделей: ${count}, на диске ${d.disk_gb} ГБ.` +
+        (d.online ? '' : ' Сервер LM Studio выключен: открой LM Studio → Developer → Start Server.');
+    roles.innerHTML = d.roles.map(lmRoleRow).join('');
+    others.innerHTML = d.others.length ? d.others.map(lmOtherRow).join('')
+      : '<div style="color:var(--muted);font-size:13px">Других моделей нет</div>';
+  } catch (e) {
     badge.textContent = 'Ошибка';
-    loaded.innerHTML = `<div style="color:#f85149;font-size:13px">${e.message}</div>`;
+    info.textContent = String(e);
   }
 }
 
-async function lmDownloadModel(modelId, btn) {
-  btn.disabled = true; btn.textContent = '⏳ Запрос...';
+async function lmDownload(req, btn) {
+  if (req.spec !== undefined && !req.spec) { toast('Вставь ссылку или имя модели', 'warn'); return; }
+  const row  = btn.closest('.lm-row');
+  const prog = row.querySelector('.lm-progress');
+  btn.disabled = true;
+  prog.style.display = 'block';
+  prog.innerHTML = '<div class="lm-bar"><div></div></div><div class="lm-line">Запускаю LM Studio…</div>';
+  const line = prog.querySelector('.lm-line'), bar = prog.querySelector('.lm-bar div');
+  let ok = false, err = '';
   try {
-    const d = await fetch('/api/lm/download', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({model_id: modelId})
-    }).then(r=>r.json());
-
-    if (d.ok) {
-      btn.textContent = '⬇ Скачивается...';
-      btn.style.color = '#3fb950';
-      toast('Скачивание началось в LM Studio', 'ok');
-    } else if (d.manual) {
-      btn.disabled = false; btn.textContent = '📥 Скачать';
-      toast('Скачай модель вручную в LM Studio: ' + shortModelName(modelId), 'warn');
-    } else {
-      btn.disabled = false; btn.textContent = '📥 Скачать';
-      toast(d.msg || 'Ошибка', 'err');
+    for await (const e of streamSSE('/api/lm/get', req)) {
+      if (e.error) { err = e.error; break; }
+      if (e.line) {
+        line.textContent = e.line;
+        const pct = e.line.match(/(\d+(?:\.\d+)?)\s*%/);
+        if (pct) bar.style.width = pct[1] + '%';
+        if (/already downloaded|уже скачан/i.test(e.line)) bar.style.width = '100%';
+      }
+      if (e.done) ok = e.ok;
     }
-  } catch(e) {
-    btn.disabled = false; btn.textContent = '📥 Скачать';
-    toast('Ошибка: ' + e, 'err');
+  } catch (e) { err = String(e); }
+  if (err) line.textContent = err;
+  if (ok) bar.style.width = '100%';
+  toast(ok ? 'Модель скачана' : (err || 'Скачать не получилось, подробности в строке под моделью'), ok ? 'ok' : 'err');
+  btn.disabled = false;
+  if (ok) {
+    if (document.getElementById('sec-lm-models').classList.contains('active')) refreshLMModels();
+    if (document.getElementById('setup-modal').style.display === 'flex') checkSetupStatus();
   }
+  return ok;
+}
+
+async function lmDownloadMissing(btn) {
+  btn.disabled = true;
+  // После каждой загрузки список перерисовывается, поэтому кнопку ищем заново по роли
+  for (const role of [...document.querySelectorAll('#setup-models-list .lm-dl')].map(b => b.dataset.role)) {
+    const b = document.querySelector(`#setup-models-list .lm-dl[data-role="${role}"]`);
+    if (b) await lmDownload({role}, b);
+  }
+  btn.disabled = false;
+  checkSetupStatus();
+}
+
+async function lmAction(action, btn) {
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = action === 'load' ? '⏳ Загружаю…' : '⏳';
+  try {
+    const d = await fetch('/api/lm/' + action, {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({key: btn.dataset.key})}).then(r => r.json());
+    toast(d.ok ? (action === 'load' ? 'Модель в памяти' : 'Модель выгружена') : (d.error || d.msg || 'Ошибка'), d.ok ? 'ok' : 'err');
+  } catch (e) { toast('Ошибка: ' + e, 'err'); }
+  btn.textContent = old;
+  btn.disabled = false;
+  refreshLMModels();
+}
+
+async function lmDelete(btn) {
+  const key = btn.dataset.key;
+  if (!confirm(`Удалить модель «${key}» (${btn.dataset.size} ГБ) с диска?\n\nЕё можно будет скачать заново.`)) return;
+  btn.disabled = true;
+  try {
+    const d = await fetch('/api/lm/delete', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({key})}).then(r => r.json());
+    toast(d.ok ? `Удалено, освобождено ${d.freed_gb} ГБ` : (d.error || 'Ошибка'), d.ok ? 'ok' : 'err');
+  } catch (e) { toast('Ошибка: ' + e, 'err'); }
+  refreshLMModels();
 }
 
 // Загружаем при переходе на страницу
-// ── Homework / МЕШ ─────────────────────────────────────────
+// ── Homework / МЭШ ─────────────────────────────────────────
 let _hwImage = '';  // base64 data-url
 
 function hwDrop(e) {
@@ -3041,13 +3249,111 @@ async function unloadLM(callerBtn) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// НАСТРОЙКИ ОФОРМЛЕНИЯ, ПОИСК ПО РАЗДЕЛАМ, КОМПАКТНОЕ МЕНЮ
+// ═══════════════════════════════════════════════════════════
+const THEMES = [
+  {id:'',         name:'Тёмная',   bg:'#0d1117', surf:'#161b22', line:'#30363d'},
+  {id:'midnight', name:'Полночь',  bg:'#0b1020', surf:'#121a2e', line:'#26324f'},
+  {id:'graphite', name:'Графит',   bg:'#0a0a0a', surf:'#141414', line:'#2c2c2c'},
+  {id:'light',    name:'Светлая',  bg:'#f6f8fa', surf:'#ffffff', line:'#d0d7de'},
+  {id:'sepia',    name:'Сепия',    bg:'#f4ecd8', surf:'#fbf6ea', line:'#dccfb0'},
+];
+const ACCENTS = [
+  {id:'', name:'Фиолетовый', c:'#7c3aed'}, {id:'blue', name:'Синий', c:'#3b82f6'},
+  {id:'green', name:'Зелёный', c:'#16a34a'}, {id:'orange', name:'Оранжевый', c:'#ea580c'},
+  {id:'pink', name:'Розовый', c:'#db2777'}, {id:'teal', name:'Бирюзовый', c:'#0d9488'},
+];
+
+function uiSettings() {
+  try { return JSON.parse(localStorage.getItem('uiSettings') || '{}'); } catch (e) { return {}; }
+}
+
+function applyUi(s) {
+  const h = document.documentElement;
+  for (const k of ['theme', 'accent', 'sidebar']) {
+    if (s[k]) h.dataset[k] = s[k]; else delete h.dataset[k];
+  }
+  document.querySelectorAll('.theme-card').forEach(el => el.classList.toggle('sel', el.dataset.v === (s.theme || '')));
+  document.querySelectorAll('.swatch').forEach(el => el.classList.toggle('sel', el.dataset.v === (s.accent || '')));
+  document.querySelectorAll('#seg-sidebar button').forEach(el => el.classList.toggle('sel', el.dataset.v === (s.sidebar || '')));
+  const start = document.getElementById('set-start');
+  if (start) start.value = s.start || 'dashboard';
+}
+
+function saveUi(patch) {
+  const s = Object.assign(uiSettings(), patch);
+  for (const k of Object.keys(s)) if (!s[k]) delete s[k];
+  try { localStorage.setItem('uiSettings', JSON.stringify(s)); } catch (e) {}
+  applyUi(s);
+}
+
+function resetUi() {
+  saveUi({theme: '', accent: '', sidebar: ''});
+  toast('Оформление сброшено', 'ok');
+}
+
+function toggleSidebar() {
+  saveUi({sidebar: uiSettings().sidebar === 'mini' ? '' : 'mini'});
+}
+
+function initSettings() {
+  document.getElementById('theme-grid').innerHTML = THEMES.map(t => `
+    <button class="theme-card" data-v="${t.id}" onclick="saveUi({theme:'${t.id}'})">
+      <div class="theme-prev" style="background:${t.bg}">
+        <div class="p-side" style="background:${t.surf};border-right:1px solid ${t.line}"></div>
+        <div class="p-main"><div class="p-line" style="background:var(--accent);width:60%"></div>
+          <div class="p-line" style="background:${t.line};width:85%"></div><div class="p-line" style="background:${t.line};width:45%"></div></div>
+      </div>
+      <div class="theme-name">${t.name}</div>
+    </button>`).join('');
+  document.getElementById('accent-swatches').innerHTML = ACCENTS.map(a =>
+    `<div class="swatch" data-v="${a.id}" title="${a.name}" style="background:${a.c}" onclick="saveUi({accent:'${a.id}'})"></div>`).join('');
+  document.querySelectorAll('#seg-sidebar button').forEach(b => b.onclick = () => saveUi({sidebar: b.dataset.v}));
+  const start = document.getElementById('set-start');
+  start.innerHTML = ['dashboard', 'chat', 'homework', 'translator', 'draw', 'sketch', 'coder-v2']
+    .map(p => `<option value="${p}">${PAGES[p]}</option>`).join('');
+  // Подсказки для компактного меню, где виден только значок
+  document.querySelectorAll('#sidebar .nav-item').forEach(el => { if (!el.title) el.title = el.textContent.trim(); });
+  applyUi(uiSettings());
+}
+
+function filterNav(q) {
+  q = q.trim().toLowerCase();
+  document.querySelectorAll('#sidebar .nav-group').forEach(g => {
+    let any = false;
+    g.querySelectorAll(':scope > .nav-item').forEach(el => {
+      const hit = !q || el.textContent.toLowerCase().includes(q);
+      el.classList.toggle('hidden', !hit);
+      any = any || hit;
+    });
+    g.classList.toggle('hidden', !any);
+  });
+}
+
+function navSearchKey(e) {
+  if (e.key === 'Enter') {
+    const first = document.querySelector('#sidebar .nav-group:not(.hidden) > .nav-item:not(.hidden)');
+    if (first) { first.click(); e.target.value = ''; filterNav(''); e.target.blur(); }
+  } else if (e.key === 'Escape') {
+    e.target.value = ''; filterNav(''); e.target.blur();
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') {
+    e.preventDefault();
+    if (uiSettings().sidebar === 'mini') toggleSidebar();
+    document.getElementById('nav-search').focus();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
 // ЗАПУСК
 // ═══════════════════════════════════════════════════════════
-setInterval(() => {
-  if (document.getElementById('sec-logs').classList.contains('active')) loadLogs();
-}, 5000);
-
 initBridge(() => {
+  initSettings();
+  const start = uiSettings().start;
+  if (start && start !== 'dashboard' && document.getElementById('sec-' + start)) go(start);
   loadStatus();
   loadHistory();
   // Показываем wizard при первом запуске (если ещё не пропускали)

@@ -2,7 +2,7 @@
 AlexGPT — Единый сервер
 Все нейросети + AI ассистент в одном Flask приложении
 """
-import base64, binascii, io, json, math, os, re, subprocess, sys, tempfile, threading, time, traceback, warnings
+import base64, binascii, io, json, math, os, re, shutil, subprocess, sys, tempfile, threading, time, traceback, warnings
 from collections import Counter, deque
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +19,7 @@ from werkzeug.exceptions import HTTPException
 
 from paths import APP_DIR, DATA_DIR, FROZEN, MODELS_DIR as MODELS, lm_config_path, script_cmd
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 warnings.filterwarnings("ignore")
 if hasattr(sys.stdout, "reconfigure"):
@@ -214,19 +214,21 @@ class ResNet(nn.Module):
         x = self.block3(x); x = self.gap(x)
         return self.classifier(x)
 
-# ── Sentiment LSTM ──
-class SentimentLSTM(nn.Module):
-    def __init__(self, vocab_size, embed_dim=64, hidden_dim=128, n_classes=3):
+# ── Классификатор текста (тональность, спам): BiLSTM + max-pooling по словам ──
+# Та же токенизация, что в lab/hf_data.py
+TOKEN_RE = re.compile(r"\w+(?:[-'’]\w+)*|[^\w\s]")
+
+class TextClassifier(nn.Module):
+    def __init__(self, vocab_size, embed_dim=128, hidden_dim=128, n_classes=3):
         super().__init__()
-        self.embed   = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
-        self.lstm    = nn.LSTM(embed_dim, hidden_dim, batch_first=True, bidirectional=True, num_layers=2, dropout=0.3)
-        self.dropout = nn.Dropout(0.4)
-        self.fc      = nn.Linear(hidden_dim * 2, n_classes)
+        self.embed = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
+        self.lstm  = nn.LSTM(embed_dim, hidden_dim, batch_first=True, bidirectional=True, num_layers=2, dropout=0.3)
+        self.drop  = nn.Dropout(0.4)
+        self.fc    = nn.Linear(hidden_dim * 2, n_classes)
     def forward(self, x):
-        emb = self.dropout(self.embed(x))
-        _, (h, _) = self.lstm(emb)
-        h = torch.cat([h[-2], h[-1]], dim=1)
-        return self.fc(self.dropout(h))
+        out, _ = self.lstm(self.drop(self.embed(x)))
+        out = out.masked_fill((x == 0).unsqueeze(-1), -1e4)
+        return self.fc(self.drop(out.max(dim=1).values))
 
 # ── Translator ──
 class PositionalEncoding(nn.Module):
@@ -241,14 +243,19 @@ class PositionalEncoding(nn.Module):
     def forward(self, x): return x + self.pe[:, :x.size(1)]
 
 class TranslatorBPE(nn.Module):
-    def __init__(self, src_vocab, tgt_vocab, d_model=256, nhead=8, num_enc=4, num_dec=4):
+    def __init__(self, src_vocab, tgt_vocab, d_model=256, nhead=8, num_enc=4, num_dec=4, ff=1024,
+                 norm_first=True, max_len=40):
         super().__init__()
         self.src_embed = nn.Embedding(src_vocab, d_model, padding_idx=0)
         self.tgt_embed = nn.Embedding(tgt_vocab, d_model, padding_idx=0)
-        self.pos_enc   = PositionalEncoding(d_model, max_len=40)
-        self.transformer = nn.Transformer(
-            d_model=d_model, nhead=nhead, num_encoder_layers=num_enc, num_decoder_layers=num_dec,
-            dim_feedforward=1024, dropout=0.1, batch_first=True)
+        self.pos_enc   = PositionalEncoding(d_model, max_len=max_len)
+        with warnings.catch_warnings():
+            # «enable_nested_tensor ... norm_first was True» — для pre-LN nested tensor не нужен, это не ошибка
+            warnings.simplefilter("ignore", UserWarning)
+            self.transformer = nn.Transformer(
+                d_model=d_model, nhead=nhead, num_encoder_layers=num_enc, num_decoder_layers=num_dec,
+                dim_feedforward=ff, dropout=0.1, batch_first=True, norm_first=norm_first)
+        self.max_len = max_len
         self.fc = nn.Linear(d_model, tgt_vocab)
         self.d  = d_model
 
@@ -348,21 +355,6 @@ class TempNet(nn.Module):
         )
     def forward(self, x): return self.net(x)
 
-# ── SpamLSTM ──
-class SpamLSTM(nn.Module):
-    def __init__(self, vocab_size, embed_dim=64, hidden_dim=128):
-        super().__init__()
-        self.embed = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
-        self.lstm  = nn.LSTM(embed_dim, hidden_dim, batch_first=True,
-                             bidirectional=True, num_layers=2, dropout=0.3)
-        self.drop  = nn.Dropout(0.4)
-        self.fc    = nn.Linear(hidden_dim * 2, 2)
-    def forward(self, x):
-        e = self.embed(x)
-        _, (h, _) = self.lstm(e)
-        h = torch.cat([h[-2], h[-1]], dim=-1)
-        return self.fc(self.drop(h))
-
 # ── RecommenderNCF ──
 class RecommenderNCF(nn.Module):
     def __init__(self, n_users, n_movies, embed_dim=32):
@@ -378,19 +370,35 @@ class RecommenderNCF(nn.Module):
     def forward(self, u, m):
         return self.mlp(torch.cat([self.user_emb(u), self.movie_emb(m)], dim=1)).squeeze(1)
 
-# ── NERModel ──
-class NERModel(nn.Module):
-    def __init__(self, vocab_size, embed_dim=64, hidden_dim=128, num_tags=9):
+# ── NER: эмбеддинг слова + CNN по символам → BiLSTM (как в lab/train_ner.py) ──
+class NERTagger(nn.Module):
+    def __init__(self, n_words, n_chars, n_tags, word_dim=100, char_dim=32, char_filters=64, hidden=192):
         super().__init__()
-        self.embed = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
-        self.lstm  = nn.LSTM(embed_dim, hidden_dim, batch_first=True,
-                             bidirectional=True, num_layers=2, dropout=0.3)
-        self.drop  = nn.Dropout(0.3)
-        self.fc    = nn.Linear(hidden_dim * 2, num_tags)
-    def forward(self, x):
-        e   = self.embed(x)
-        out, _ = self.lstm(e)
-        return self.fc(self.drop(out))  # [B, T, num_tags]
+        self.word_emb = nn.Embedding(n_words, word_dim, padding_idx=0)
+        self.char_emb = nn.Embedding(n_chars, char_dim, padding_idx=0)
+        self.char_cnn = nn.Conv1d(char_dim, char_filters, 3, padding=1)
+        self.lstm = nn.LSTM(word_dim + char_filters, hidden, num_layers=2, bidirectional=True,
+                            batch_first=True, dropout=0.3)
+        self.drop = nn.Dropout(0.4)
+        self.fc = nn.Linear(hidden * 2, n_tags)
+    def forward(self, words, chars):
+        B, T, C = chars.shape
+        c = self.char_emb(chars.view(B * T, C)).transpose(1, 2)
+        c = torch.relu(self.char_cnn(c)).max(dim=2).values.view(B, T, -1)
+        out, _ = self.lstm(self.drop(torch.cat([self.word_emb(words), c], dim=-1)))
+        return self.fc(self.drop(out))
+
+# ── SketchNet (DrawGuess: цифры, буквы, фигуры, объекты, математические знаки) ──
+class SketchNet(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 32, 3, padding=1), nn.ReLU(),
+            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2), nn.Dropout(0.25))
+        self.head = nn.Sequential(nn.Flatten(), nn.Linear(128 * 7 * 7, 256), nn.ReLU(), nn.Dropout(0.5),
+                                  nn.Linear(256, num_classes))
+    def forward(self, x): return self.head(self.features(x))
 
 # ═══════════════════════════════════════════════════════
 # КОНСТАНТЫ НОРМАЛИЗАЦИИ (те же что при обучении)
@@ -423,39 +431,6 @@ _sales = (300 + _days * 0.05
 _sales = np.clip(_sales, 50, None).astype(np.float32)
 TS_SALES = _sales; TS_MEAN = float(_sales.mean()); TS_STD = float(_sales.std())
 
-# -- Sentiment vocab --
-_SENT_RAW = [
-    "отличный товар очень доволен покупкой рекомендую всем",
-    "быстрая доставка качество супер спасибо продавцу",
-    "великолепное качество все соответствует описанию",
-    "шикарная вещь буду заказывать ещё очень нравится",
-    "превосходно всё отлично работает счастлив покупкой",
-    "замечательный товар упаковка хорошая пришло быстро",
-    "восхитительно качество на высоте очень рад",
-    "прекрасная покупка цена качество идеальное соотношение",
-    "классный продукт работает отлично доволен",
-    "ужасное качество товар сломался через день",
-    "не рекомендую деньги выброшены на ветер",
-    "полный брак не соответствует описанию обман",
-    "очень плохо товар пришёл повреждённым",
-    "разочарован покупкой не работает вернул",
-    "отвратительное обслуживание больше не закажу",
-    "просто ужас качество ноль звёзд",
-    "мусор а не товар требую возврат",
-    "нормальный товар ничего особенного",
-    "пришло в срок упаковка целая",
-    "как описано без сюрпризов",
-    "среднее качество цена соответствует",
-    "неплохо но есть недостатки",
-    "обычный товар для своей цены",
-    "ничего не понравилось но и не расстроил",
-    "нейтральный отзыв товар как товар",
-]
-_cnt = Counter()
-for t in _SENT_RAW: _cnt.update(t.lower().split())
-SENT_VOCAB = {"<PAD>": 0, "<UNK>": 1}
-for w, _ in _cnt.most_common(500): SENT_VOCAB[w] = len(SENT_VOCAB)
-
 PRICE_FIELDS    = [("area", 60), ("rooms", 2), ("floor", 5), ("district", 2), ("age", 10)]
 TEMP_FIELDS     = [("temp_today", 10), ("pressure", 760), ("humidity", 60), ("wind", 3), ("cloud", 0.5), ("month", 6)]
 CUSTOMER_FIELDS = [("age", 35), ("orders", 10), ("avg", 3000), ("total", 30), ("days", 20), ("visits", 10)]
@@ -469,7 +444,7 @@ MODEL_FILES = {
     "translator": "translator_bpe_en2ru.pth", "gan": "gan_generator.pth", "price": "price_model.pth",
     "timeseries": "timeseries_model.pth", "temperature": "temperature_model.pth", "spam": "spam_model.pth",
     "clustering": "clustering_model.pth", "anomaly": "anomaly_model.pth", "defect": "defect_model.pth",
-    "ner": "ner_model.pth", "recommender": "recommender_model.pth",
+    "ner": "ner_model.pth", "recommender": "recommender_model.pth", "sketch": "drawguess.pth",
 }
 
 # ═══════════════════════════════════════════════════════
@@ -506,19 +481,29 @@ def load_gpt():
 def load_mnist():
     return cached("mnist", lambda: ready(ResNet(), ckpt("mnist_web.pth")))
 
-def load_sentiment():
+def load_classifier(name):
+    """Тональность и спам: {"model_state", "vocab", "labels", "max_len", "config"} из lab/text_classifier.py"""
     def build():
-        state = ckpt("sentiment_model.pth")
-        return ready(SentimentLSTM(state["embed.weight"].shape[0]), state)
-    return cached("sentiment", build)
+        c = ckpt(name)
+        return SimpleNamespace(model=ready(TextClassifier(len(c["vocab"]), **c["config"]), c["model_state"]),
+                               vocab=c["vocab"], labels=c["labels"], max_len=c["max_len"])
+    return cached(name, build)
+
+def classify(m, text):
+    ids = [m.vocab.get(t, 1) for t in TOKEN_RE.findall(text.lower())][:m.max_len] or [1]
+    with torch.inference_mode():
+        return torch.softmax(m.model(torch.tensor([ids], device=DEVICE)), dim=1)[0].tolist()
+
+def load_sentiment():
+    return load_classifier("sentiment_model.pth")
 
 def load_translator(direction):
     def build():
         en_tok, ru_tok = tokenizer("bpe_en.json"), tokenizer("bpe_ru.json")
         src, tgt = (en_tok, ru_tok) if direction == "en2ru" else (ru_tok, en_tok)
-        model = ready(TranslatorBPE(src.get_vocab_size(), tgt.get_vocab_size()),
-                      ckpt(f"translator_bpe_{direction}.pth", weights_only=False)["model"])
-        # При обучении encoder видел паддинг как обычные позиции, без nested tensor
+        c = ckpt(f"translator_bpe_{direction}.pth")
+        model = ready(TranslatorBPE(src.get_vocab_size(), tgt.get_vocab_size(), **c["config"]), c["model"])
+        # Паддинг маскируем явно; nested tensor для pre-LN всё равно недоступен и только шлёт предупреждение
         model.transformer.encoder.enable_nested_tensor = False
         model.transformer.encoder.use_nested_tensor = False
         return SimpleNamespace(model=model, src=src, tgt=tgt)
@@ -542,11 +527,7 @@ def load_temperature():
     return cached("temp", build)
 
 def load_spam():
-    def build():
-        c = ckpt("spam_model.pth")
-        model = SpamLSTM(c["vocab_size"], c.get("embed_dim", 64), c.get("hidden_dim", 128))
-        return SimpleNamespace(model=ready(model, c["model_state"]), vocab=c["vocab"], max_len=c.get("max_len", 40))
-    return cached("spam", build)
+    return load_classifier("spam_model.pth")
 
 def load_clustering():
     def build():
@@ -584,10 +565,16 @@ def load_recommender():
 def load_ner():
     def build():
         c = ckpt("ner_model.pth")
-        model = NERModel(c["vocab_size"], c.get("embed_dim", 64), c.get("hidden_dim", 128), len(c["tags"]))
-        return SimpleNamespace(model=ready(model, c["model_state"]), vocab=c["vocab"], tags=c["tags"],
-                               max_len=c.get("max_len", 20))
+        model = NERTagger(len(c["word_vocab"]), len(c["char_vocab"]), len(c["tags"]), **c["config"])
+        return SimpleNamespace(model=ready(model, c["model_state"]), words=c["word_vocab"], chars=c["char_vocab"],
+                               tags=c["tags"], max_chars=c["max_chars"])
     return cached("ner", build)
+
+def load_sketch():
+    def build():
+        labels = json.loads((MODELS / "drawguess_labels.json").read_text(encoding="utf-8"))
+        return SimpleNamespace(model=ready(SketchNet(len(labels)), ckpt("drawguess.pth")), labels=labels)
+    return cached("sketch", build)
 
 # ═══════════════════════════════════════════════════════
 # LM STUDIO
@@ -623,8 +610,14 @@ def lm_error(loaded):
     return None
 
 def strip_think(text):
-    text = re.sub(r"<think>.*?(</think>|$)", "", text, flags=re.S)
-    return text.split("</think>")[-1].strip()
+    """Убирает рассуждения R1 в начале ответа. Раньше резалось всё до последнего </think> и до конца
+    после любого <think> — и ответ, где эти слова встречаются как текст, пропадал целиком.
+    Современный LM Studio отдаёт рассуждения отдельным полем reasoning_content, тут — старый формат."""
+    text = text.lstrip()
+    if text.startswith("<think>"):
+        end = text.find("</think>")
+        return "" if end < 0 else text[end + len("</think>"):].strip()
+    return text.strip()
 
 def _route_model(query: str) -> str:
     q = query.lower()
@@ -649,107 +642,234 @@ def api_logs():
 def api_lm_logs():
     return jsonify(list(_lm_log_buf))
 
+def lm_in_memory():
+    """Модели, реально загруженные в память. /v1/models отдаёт все скачанные (JIT-загрузка)."""
+    j = lm_get(f"{LM_HOST}/api/v0/models")
+    if not isinstance(j, dict):
+        return None
+    return [m.get("id", "") for m in j.get("data", []) if m.get("state") == "loaded"]
+
 @app.route("/api/lm/models")
 def api_lm_models():
-    loaded = lm_loaded()
-    if loaded is None:
-        return jsonify({"models": [], "online": False, "error": "LM Studio недоступна"})
-    return jsonify({"models": loaded, "online": True})
+    available = lm_loaded()
+    if available is None:
+        return jsonify({"models": [], "available": [], "online": False, "error": "LM Studio недоступна"})
+    in_memory = lm_in_memory()
+    return jsonify({"models": available if in_memory is None else in_memory, "available": available, "online": True})
 
 @app.route("/api/lm/config")
 def api_lm_config():
     return jsonify({"models": LM_MDLS, "url": LM_URL})
 
-@app.route("/api/lm/setup_check")
-def lm_setup_check():
-    """Проверяет статус LM Studio и нужных моделей для мастера настройки."""
-    loaded = lm_loaded(timeout=3)
-    online = loaded is not None
-    loaded = loaded or []
+QUANT_RE = re.compile(r"(IQ\d_\w+|Q\d_K_[SML]|Q\d_K|Q\d_\d|BF16|F16)", re.I)
+ANSI_RE  = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 
-    # Скачанные модели (LM Studio v0 API отдаёт {"data": [...]})
-    downloaded = []
-    if online:
-        j = lm_get(f"{LM_HOST}/api/v0/models", timeout=3) or {}
-        items = j.get("data", []) if isinstance(j, dict) else j
-        downloaded = [m.get("id", m.get("path", "")) for m in items if isinstance(m, dict)]
+def lms_path():
+    exe = shutil.which("lms") or str(Path.home() / ".lmstudio" / "bin" / ("lms.exe" if sys.platform == "win32" else "lms"))
+    return exe if Path(exe).exists() else None
 
-    def _filename(path):
-        return path.replace("\\", "/").split("/")[-1].lower()
-
-    loaded_files = [_filename(ld) for ld in loaded]
-    downloaded_files = [_filename(d) for d in downloaded]
-
-    ROLE_NAMES = {"coder": "Кодер", "reasoner": "Аналитик", "writer": "Писатель", "vision": "Vision"}
-    MODEL_META = {
-        "deepseek-coder-6.7b-instruct.Q4_K_S.gguf": {"size": "3.9 GB", "arch": "llama",   "arch_color": "#1f6feb", "publisher": "TheBloke",           "icon": "💻"},
-        "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf":  {"size": "4.7 GB", "arch": "qwen2",   "arch_color": "#da3633", "publisher": "lmstudio-community", "icon": "🧠"},
-        "Qwen2.5-7B-Instruct-Q4_K_M.gguf":          {"size": "4.7 GB", "arch": "qwen2",   "arch_color": "#da3633", "publisher": "lmstudio-community", "icon": "✍️"},
-        "Qwen2-VL-7B-Instruct-Q4_K_M.gguf":         {"size": "7.4 GB", "arch": "qwen2vl", "arch_color": "#da3633", "publisher": "lmstudio-community", "icon": "👁️"},
-    }
-    required = []
-    seen = set()
-    for role, cfg in LM_MDLS.items():
-        mid = cfg.get("model_id", "")
-        if mid and mid not in seen:
-            seen.add(mid)
-            fname = _filename(mid)
-            is_loaded     = any(fname in lf or lf in fname for lf in loaded_files)
-            is_downloaded = is_loaded or any(fname in df or df in fname for df in downloaded_files)
-            meta = MODEL_META.get(mid.split("/")[-1], {})
-            required.append({
-                "role":        role,
-                "role_name":   ROLE_NAMES.get(role, role),
-                "model_id":    mid,
-                "loaded":      is_loaded,
-                "downloaded":  is_downloaded,
-                "size":        meta.get("size", ""),
-                "arch":        meta.get("arch", ""),
-                "arch_color":  meta.get("arch_color", "#555"),
-                "publisher":   meta.get("publisher", ""),
-                "icon":        meta.get("icon", "🤖"),
-            })
-
-    return jsonify({
-        "online":     online,
-        "loaded":     loaded,
-        "required":   required,
-        "all_loaded": online and all(m["loaded"] for m in required),
-    })
-
-
-@app.route("/api/lm/download", methods=["POST"])
-def lm_download():
-    """Запускает скачивание модели через LM Studio API."""
-    model_id = text_field(body(), "model_id")
+def lms_local_models():
+    """Скачанные модели из `lms ls --json` (с размерами); None — утилиты lms нет."""
+    exe = lms_path()
+    if not exe:
+        return None
     try:
-        r = requests.post(f"{LM_HOST}/api/v0/models/download", json={"model": model_id}, timeout=10)
-        if r.ok:
-            return jsonify({"ok": True, "msg": f"Скачивание начато: {model_id}"})
-        # LM Studio может не поддерживать API скачивания — даём ссылку
-        return jsonify({"ok": False, "msg": f"LM Studio вернула {r.status_code}. Скачай вручную в LM Studio.", "manual": True})
-    except requests.RequestException as e:
-        return jsonify({"ok": False, "msg": str(e), "manual": True})
+        out = subprocess.run([exe, "ls", "--json"], capture_output=True, text=True, encoding="utf-8",
+                             errors="replace", timeout=30, creationflags=NO_WINDOW).stdout
+        return [m for m in json.loads(out) if isinstance(m, dict)]
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
 
-@app.route("/api/lm/download_progress")
-def lm_download_progress():
-    j = lm_get(f"{LM_HOST}/api/v0/models/download/progress", timeout=3)
-    return jsonify({"ok": j is not None, "data": j or {}})
+def hf_spec(model_id):
+    owner, repo = model_id.split("/")[:2]
+    q = QUANT_RE.search(model_id.rsplit("/", 1)[-1])
+    return f"https://huggingface.co/{owner}/{repo}" + (f"@{q.group(1).upper()}" if q else "")
 
+@app.route("/api/lm/catalog")
+def lm_catalog():
+    local     = lms_local_models()
+    in_memory = set(lm_in_memory() or [])
+    by_path   = {m.get("path", "").lower(): m for m in local or []}
+    used      = set()
+    roles = []
+    for role, cfg in LM_MDLS.items():
+        mid  = cfg.get("model_id", "")
+        info = by_path.get(mid.lower())
+        if info:
+            used.add(info.get("path", "").lower())
+        q = QUANT_RE.search(mid.rsplit("/", 1)[-1])
+        roles.append({
+            "role": role, "title": cfg.get("title", role), "about": cfg.get("about", ""), "model_id": mid,
+            "repo": mid.split("/")[1] if mid.count("/") >= 2 else mid, "quant": q.group(1).upper() if q else "",
+            "publisher": mid.split("/")[0] if "/" in mid else "", "hf_url": hf_spec(mid).split("@")[0] if "/" in mid else "",
+            "size_gb": round(info["sizeBytes"] / 1e9, 1) if info and info.get("sizeBytes") else cfg.get("size_gb"),
+            "params": info.get("paramsString") if info else None,
+            "downloaded": None if local is None else info is not None,
+            "loaded": bool(info) and info.get("modelKey") in in_memory,
+            "key": info.get("modelKey") if info else None, "deletable": bool(info) and bool(model_files(info)),
+        })
+    others = [{"key": m.get("modelKey"), "name": m.get("displayName") or m.get("modelKey"),
+               "size_gb": round(m.get("sizeBytes", 0) / 1e9, 1), "type": m.get("type"),
+               "params": m.get("paramsString"), "quant": (m.get("quantization") or {}).get("name"),
+               "vision": bool(m.get("vision")), "loaded": m.get("modelKey") in in_memory,
+               "deletable": bool(model_files(m))}
+              for m in local or [] if m.get("path", "").lower() not in used]
+    return jsonify({"online": lm_loaded() is not None, "lms": lms_path() is not None, "roles": roles, "others": others,
+                    "disk_gb": round(sum(m.get("sizeBytes", 0) for m in local or []) / 1e9, 1)})
+
+SPEC_RE = re.compile(r"(https://huggingface\.co/)?[\w.-]+/[\w.-]+(@[\w.-]+)?")
+
+def require_lms():
+    exe = lms_path()
+    if not exe:
+        abort(501, "Не найдена утилита LM Studio (lms). Установи LM Studio и запусти его хотя бы один раз.")
+    return exe
+
+def lms_run(*args, timeout=180):
+    r = subprocess.run([require_lms(), *args], capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       stdin=subprocess.DEVNULL, timeout=timeout, creationflags=NO_WINDOW)
+    return r.returncode, ANSI_RE.sub("", (r.stdout or "") + (r.stderr or "")).strip()
+
+def local_model(key):
+    if not isinstance(key, str) or not key:
+        abort(400, "Не указана модель")
+    info = next((m for m in lms_local_models() or [] if m.get("modelKey") == key), None)
+    if not info:
+        abort(404, "Модель не найдена среди скачанных")
+    return info
+
+@app.route("/api/lm/load", methods=["POST"])
+def lm_load_one():
+    info = local_model(body().get("key"))
+    code, out = lms_run("load", info["modelKey"], "-y", timeout=300)
+    return jsonify({"ok": code == 0, "msg": out.splitlines()[-1] if out else ""})
+
+@app.route("/api/lm/unload_one", methods=["POST"])
+def lm_unload_one():
+    info = local_model(body().get("key"))
+    code, out = lms_run("unload", info["modelKey"])
+    return jsonify({"ok": code == 0, "msg": out.splitlines()[-1] if out else ""})
+
+def lms_dirs():
+    root = Path.home() / ".lmstudio"
+    try:
+        cfg = json.loads((root / "settings.json").read_text(encoding="utf-8"))
+        models = Path(cfg.get("downloadsFolder") or root / "models")
+    except (OSError, ValueError):
+        models = root / "models"
+    return models.resolve(), (root / "hub" / "models").resolve()
+
+def model_files(info):
+    """Что удалять: для обычной модели — её .gguf (и mmproj, если других моделей в папке нет),
+    для модели из каталога LM Studio — манифест в hub и папку с весами."""
+    try:
+        return _model_files(info.get("path", ""))
+    except (ValueError, OSError):   # путь с \0, слишком длинный, недоступный — ничего не трогаем
+        return []
+
+def _model_files(path):
+    models, hub = lms_dirs()
+    target = (models / path).resolve()
+    if target.is_file() and target.suffix == ".gguf" and models in target.parents:
+        rest = [p for p in target.parent.glob("*.gguf") if p != target and not p.name.lower().startswith("mmproj")]
+        return [target] if rest else [target.parent]
+    manifest = (hub / path).resolve()
+    if (manifest / "manifest.json").exists() and hub in manifest.parents:
+        found = [manifest]
+        for dep in json.loads((manifest / "manifest.json").read_text(encoding="utf-8")).get("dependencies", []):
+            for src in dep.get("sources", []):
+                d = (models / src.get("user", "") / src.get("repo", "")).resolve()
+                if src.get("type") == "huggingface" and d.is_dir() and models in d.parents:
+                    found.append(d)
+        return found
+    return []
+
+@app.route("/api/lm/delete", methods=["POST"])
+def lm_delete():
+    info  = local_model(body().get("key"))
+    paths = model_files(info)
+    if not paths:
+        abort(409, "Эту модель можно удалить только в самом LM Studio (My Models)")
+    lms_run("unload", info["modelKey"])
+    freed = 0
+    for p in paths:
+        freed += sum(f.stat().st_size for f in (p.rglob("*") if p.is_dir() else [p]) if f.is_file())
+        shutil.rmtree(p) if p.is_dir() else p.unlink()
+    models, _ = lms_dirs()
+    parent = paths[0].parent
+    while parent != models and models in parent.parents and not any(parent.iterdir()):
+        parent.rmdir()
+        parent = parent.parent
+    lm_log(f"🗑 Удалена модель {info['modelKey']} ({freed / 1e9:.1f} ГБ)")
+    return jsonify({"ok": True, "freed_gb": round(freed / 1e9, 1)})
+
+@app.route("/api/lm/get", methods=["POST"])
+def lm_get_model():
+    d    = body()
+    role = d.get("role")
+    if isinstance(role, str) and role:
+        cfg = LM_MDLS.get(role)
+        if not cfg or "/" not in cfg.get("model_id", ""):
+            abort(400, "Неизвестная роль")
+        spec = hf_spec(cfg["model_id"])
+    else:
+        spec = text_field(d, "spec")
+        if not SPEC_RE.fullmatch(spec):
+            abort(400, "Нужна ссылка вида https://huggingface.co/автор/модель или имя автор/модель (можно с @Q4_K_M)")
+    exe = require_lms()
+    proc = subprocess.Popen([exe, "get", spec, "-y"], stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True, encoding="utf-8",
+                            errors="replace", creationflags=NO_WINDOW)
+    lm_log(f"⬇ lms get {spec}")
+
+    def generate():
+        last, sent_at = "", 0.0
+        try:
+            for raw in proc.stdout:
+                line = ANSI_RE.sub("", raw).strip(" \r\n⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
+                # Прогресс-бар lms перерисовывается много раз в секунду — шлём не чаще 3 раз
+                if not line or line == last or ("%" in line and time.time() - sent_at < 0.33):
+                    continue
+                last, sent_at = line, time.time()
+                yield sse({"line": line})
+            code = proc.wait()
+            lm_log(f"{'✓' if code == 0 else '✗'} lms get завершён (код {code})")
+            yield sse({"done": True, "ok": code == 0})
+        finally:
+            if proc.poll() is None:
+                proc.terminate()
+    return event_stream(generate())
 
 def parse_homework(raw):
+    # R1 любит Markdown: «**ОТВЕТ:**» — снимаем выделение только вокруг ключевых слов, не в самом ответе
+    raw = re.sub(r"\*\*\s*(ЗАДАНИЕ\s*\d*|ОТВЕТ|ПОЯСНЕНИЕ)\s*(:?)\s*\*\*", r"\1\2", raw, flags=re.I)
+
     def answer_of(block):
-        ans = re.search(r"ОТВЕТ\s*:?[ \t]*(.*)", block, re.I)
+        # Ответ — до «ПОЯСНЕНИЕ» или пустой строки: так ловится и «ОТВЕТ:\n1) x = 4\n2) б) Париж»
+        ans = re.search(r"ОТВЕТ\s*:?[ \t]*(.*?)(?=ПОЯСНЕНИЕ|\n[ \t]*\n|$)", block, re.I | re.S)
         exp = re.search(r"ПОЯСНЕНИЕ\s*:?\s*(.*)", block, re.I | re.S)
-        a = re.split(r"ПОЯСНЕНИЕ", ans.group(1), flags=re.I)[0].strip() if ans else block.strip().split("\n")[0]
+        a = ans.group(1).strip() if ans else block.strip().split("\n")[0]
         return a, exp.group(1).strip() if exp else ""
 
     blocks = [b for b in re.split(r"ЗАДАНИЕ\s*\d+\s*:?", raw, flags=re.I)[1:] if b.strip()]
     if not blocks:
-        return answer_of(raw)
+        # Модель часто пишет несколько «ОТВЕТ:» подряд без заголовков «ЗАДАНИЕ N:»
+        blocks = [b for b in re.split(r"(?=ОТВЕТ\s*:)", raw, flags=re.I) if re.match(r"ОТВЕТ\s*:", b, re.I)]
+        if len(blocks) < 2:
+            return answer_of(raw)
     parsed = [answer_of(b) for b in blocks]
     answer = "\n".join(f"Задание {i}: {a}" for i, (a, _) in enumerate(parsed, 1))
     return answer, "\n".join(e for _, e in parsed if e)
+
+HOMEWORK_TIMEOUT = 300   # первая загрузка модели в память + рассуждения R1
+
+def lm_error_text(resp):
+    """Текст ошибки из ответа LM Studio ({"error": "..."} или {"error": {"message": ...}}), а не просто «400»."""
+    try:
+        err = resp.json().get("error")
+        return (err.get("message") if isinstance(err, dict) else err) or resp.reason
+    except (ValueError, AttributeError):
+        return resp.text[:300] or resp.reason
 
 @app.route("/api/homework/solve", methods=["POST"])
 def homework_solve():
@@ -779,18 +899,42 @@ def homework_solve():
     model_id = (LM_MDLS.get(role, {}).get("model_id") or LM_MDLS.get("reasoner", {}).get("model_id") or loaded[0])
     content = [{"type": "text", "text": user_msg}, {"type": "image_url", "image_url": {"url": image}}] if image else user_msg
 
+    def ask(mid, max_tokens):
+        if mid == LM_MDLS.get("reasoner", {}).get("model_id"):
+            # Рекомендации DeepSeek для R1: без system prompt (всё в сообщении пользователя), температура ~0.6 —
+            # с system prompt и 0.1 модель на тесте «Столица Франции?» выбрала Лион
+            messages = [{"role": "user", "content": f"{system_prompt}\n\n{content}"}]
+            temperature = 0.6
+        else:
+            messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": content}]
+            temperature = 0.1
+        payload = {"model": mid, "temperature": temperature, "max_tokens": max_tokens, "stream": False,
+                   "messages": messages}
+        r = requests.post(f"{LM_URL}/chat/completions", json=payload, timeout=HOMEWORK_TIMEOUT)
+        if not r.ok:
+            # LM Studio иногда отвечает 400 «Channel Error», пока модель догружается — одна повторная попытка
+            log(f"[HOMEWORK] LM Studio {r.status_code}: {lm_error_text(r)} — повтор", "WARNING")
+            time.sleep(3)
+            r = requests.post(f"{LM_URL}/chat/completions", json=payload, timeout=HOMEWORK_TIMEOUT)
+        if not r.ok:
+            raise requests.HTTPError(f"{r.status_code}: {lm_error_text(r)}")
+        return strip_think(r.json()["choices"][0]["message"].get("content") or "")
+
     try:
-        r = requests.post(f"{LM_URL}/chat/completions", json={
-            "model": model_id,
-            "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": content}],
-            "temperature": 0.1, "max_tokens": 512, "stream": False,
-        }, timeout=60)
-        r.raise_for_status()
-        raw = strip_think(r.json()["choices"][0]["message"]["content"])
+        # R1 сначала рассуждает (отдельное поле reasoning_content) — ему нужен запас токенов
+        raw = ask(model_id, 4096 if role == "reasoner" else 1024)
+        writer = LM_MDLS.get("writer", {}).get("model_id")
+        if not raw and role == "reasoner" and writer:
+            log("[HOMEWORK] рассуждения съели все токены — спрашиваю writer", "WARNING")
+            raw = ask(writer, 1024)
     except requests.ConnectionError:
         return jsonify({"error": "LM Studio офлайн"}), 503
-    except (requests.RequestException, KeyError, IndexError, ValueError) as e:
+    except requests.Timeout:
+        return jsonify({"error": "Модель думала дольше 5 минут — попробуй ещё раз или разбей задание"}), 504
+    except (requests.RequestException, KeyError, IndexError, ValueError, TypeError) as e:
         return jsonify({"error": f"Ошибка LM Studio: {e}"}), 502
+    if not raw:
+        return jsonify({"error": "Модель не дала ответа — попробуй ещё раз"}), 502
 
     answer, explanation = parse_homework(raw)
     return jsonify({"answer": answer, "explanation": explanation, "raw": raw})
@@ -871,20 +1015,47 @@ def mnist_predict():
     return jsonify({"digit": pred, "confidence": round(max(probs) * 100, 1),
                     "probs": [round(p * 100, 1) for p in probs]})
 
+# ── Угадай рисунок (DrawGuess) ──
+def sketch_frame(arr):
+    """Та же нормализация, что при обучении DrawGuess: обрезка по краске,
+    длинная сторона 20 px, центр кадра 28×28, значения 0..1."""
+    ys, xs = np.where(arr > 0.1)
+    if len(xs) == 0:
+        return None
+    crop = Image.fromarray((arr[ys.min():ys.max() + 1, xs.min():xs.max() + 1] * 255).astype(np.uint8))
+    w, h = crop.size
+    scale = 20 / max(w, h)
+    small = crop.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.LANCZOS)
+    frame = Image.new("L", (28, 28), 0)
+    frame.paste(small, ((28 - small.width) // 2, (28 - small.height) // 2))
+    return np.asarray(frame, dtype=np.float32) / 255.0
+
+@app.route("/api/sketch/predict", methods=["POST"])
+def sketch_predict():
+    d   = body()
+    img = decode_image(d.get("image"))
+    if img.width * img.height > 4096 * 4096:
+        abort(400, "Слишком большое изображение")
+    top = int_field(d, "top", 8, 1, 20)
+    frame = sketch_frame(np.asarray(img.convert("L"), dtype=np.float32) / 255.0)
+    if frame is None:
+        abort(400, "Холст пустой")
+    m = load_sketch()
+    with torch.inference_mode():
+        probs = torch.softmax(m.model(torch.from_numpy(frame).view(1, 1, 28, 28).to(DEVICE)), 1)[0].cpu()
+    p, idx = probs.topk(min(top, len(m.labels)))
+    return jsonify({"guesses": [{"label": m.labels[i], "prob": round(float(v) * 100, 1)}
+                                for v, i in zip(p.tolist(), idx.tolist())]})
+
 # ── Тональность ──
 @app.route("/api/sentiment/analyze", methods=["POST"])
 def sentiment_analyze():
-    text = text_field(body(), "text").lower()
-    MAX  = 20
-    ids  = [SENT_VOCAB.get(w, 1) for w in text.split()][:MAX]
-    ids += [0] * (MAX - len(ids))
-    with torch.inference_mode():
-        probs = torch.softmax(load_sentiment()(torch.tensor([ids], device=DEVICE)), dim=1)[0].tolist()
-    labels = ["негативный", "нейтральный", "позитивный"]
+    m      = load_sentiment()
+    probs  = classify(m, text_field(body(), "text"))
     emojis = ["😠", "😐", "😊"]
     pred   = int(np.argmax(probs))
-    return jsonify({"label": labels[pred], "emoji": emojis[pred],
-                    "scores": {l: round(p * 100, 1) for l, p in zip(labels, probs)}})
+    return jsonify({"label": m.labels[pred], "emoji": emojis[pred],
+                    "scores": {l: round(p * 100, 1) for l, p in zip(m.labels, probs)}})
 
 # ── Перевод ──
 @app.route("/api/translate", methods=["POST"])
@@ -895,26 +1066,35 @@ def translate():
     if direction not in ("en2ru", "ru2en"):
         abort(400, "direction должен быть en2ru или ru2en")
     t = load_translator(direction)
+    # Модель училась на отдельных предложениях — длинный текст переводим по предложениям
+    parts = [s for s in SENT_SPLIT_RE.split(text.strip()) if s.strip()][:MAX_TRANSLATE_SENTENCES]
+    result = " ".join(filter(None, (translate_sentence(t, s) for s in parts)))
+    return jsonify({"translation": result or "(пустой результат)"})
+
+SENT_SPLIT_RE = re.compile(r"(?<=[.!?…])\s+|\n+")
+MAX_TRANSLATE_SENTENCES = 30
+
+def translate_sentence(t, text):
     m = t.model
-    MAX = 40; PAD, SOS, EOS = 0, 1, 2
+    MAX = m.max_len; PAD, SOS, EOS = 0, 1, 2
     ids = [SOS] + t.src.encode(text).ids[:MAX - 2] + [EOS]
     ids += [PAD] * (MAX - len(ids))
     src = torch.tensor([ids], device=DEVICE)
+    pad = src == PAD
     with torch.inference_mode():
-        se  = m.pos_enc(m.src_embed(src) * math.sqrt(m.d))
-        mem = m.transformer.encoder(se, src_key_padding_mask=(src == PAD))
+        mem = m.transformer.encoder(m.pos_enc(m.src_embed(src) * math.sqrt(m.d)), src_key_padding_mask=pad)
         tgt_ids = [SOS]
         # Позиционное кодирование знает только MAX позиций
         for _ in range(MAX - 1):
             tgt = torch.tensor([tgt_ids], device=DEVICE)
-            te  = m.pos_enc(m.tgt_embed(tgt) * math.sqrt(m.d))
             T   = tgt.size(1)
-            tm  = torch.triu(torch.ones(T, T, device=DEVICE), diagonal=1).bool()
-            out = m.transformer.decoder(te, mem, tgt_mask=tm)
+            tm  = torch.triu(torch.ones(T, T, device=DEVICE, dtype=torch.bool), diagonal=1)
+            out = m.transformer.decoder(m.pos_enc(m.tgt_embed(tgt) * math.sqrt(m.d)), mem,
+                                        tgt_mask=tm, memory_key_padding_mask=pad)
             nid = m.fc(out[:, -1]).argmax(-1).item()
             if nid == EOS: break
             tgt_ids.append(nid)
-    return jsonify({"translation": t.tgt.decode(tgt_ids[1:]).strip() or "(пустой результат)"})
+    return t.tgt.decode(tgt_ids[1:]).strip()
 
 # ── GPT стриминг ──
 @app.route("/api/gpt/stream", methods=["POST"])
@@ -1015,13 +1195,7 @@ def temperature_predict():
 # ── Обнаружение спама ──
 @app.route("/api/spam/analyze", methods=["POST"])
 def spam_analyze():
-    text = text_field(body(), "text")
-    m    = load_spam()
-    ids  = [m.vocab.get(w, 1) for w in text.lower().split()[:m.max_len]]
-    ids += [0] * (m.max_len - len(ids))
-    with torch.inference_mode():
-        probs = torch.softmax(m.model(torch.tensor([ids], device=DEVICE)), dim=1)[0].cpu().numpy()
-    spam_prob, ham_prob = float(probs[1]), float(probs[0])
+    ham_prob, spam_prob = classify(load_spam(), text_field(body(), "text"))
     return jsonify({
         "label":     "SPAM" if spam_prob > 0.5 else "HAM",
         "spam_prob": round(spam_prob * 100, 1),
@@ -1090,30 +1264,31 @@ def defect_check():
 # ── NER ──
 @app.route("/api/ner/analyze", methods=["POST"])
 def ner_analyze():
-    text   = text_field(body(), "text")
-    m      = load_ner()
-    tokens = text.split()[:m.max_len]
-    ids    = [m.vocab.get(t.lower(), 1) for t in tokens]
-    ids   += [0] * (m.max_len - len(ids))
+    text  = text_field(body(), "text")
+    m     = load_ner()
+    found = list(TOKEN_RE.finditer(text))[:NER_MAX_TOKENS]
+    if not found:
+        return jsonify({"tokens": [], "entities": []})
+    words = torch.tensor([[m.words.get(t.group().lower(), 1) for t in found]], device=DEVICE)
+    chars = torch.zeros(1, len(found), m.max_chars, dtype=torch.long)
+    for j, t in enumerate(found):
+        for k, ch in enumerate(t.group()[:m.max_chars]):
+            chars[0, j, k] = m.chars.get(ch, 1)
     with torch.inference_mode():
-        preds = m.model(torch.tensor([ids], device=DEVICE))[0][:len(tokens)].argmax(-1).cpu().numpy()
-    result = [{"token": t, "tag": m.tags[p]} for t, p in zip(tokens, preds)]
-    # Группируем в сущности
-    entities = []
-    cur_ent, cur_type = [], None
-    for item in result:
-        tag = item["tag"]
-        if tag.startswith("B-"):
-            if cur_ent: entities.append({"text": " ".join(cur_ent), "type": cur_type})
-            cur_ent  = [item["token"]]
-            cur_type = tag[2:]
-        elif tag.startswith("I-") and cur_type == tag[2:]:
-            cur_ent.append(item["token"])
-        else:
-            if cur_ent: entities.append({"text": " ".join(cur_ent), "type": cur_type})
-            cur_ent, cur_type = [], None
-    if cur_ent: entities.append({"text": " ".join(cur_ent), "type": cur_type})
-    return jsonify({"tokens": result, "entities": entities})
+        preds = m.model(words, chars.to(DEVICE))[0].argmax(-1).tolist()
+    tags = [m.tags[p] for p in preds]
+    # Группируем BIO в сущности; I- без B- тоже начинает сущность. Текст берём из оригинала по позициям,
+    # чтобы «August 4, 1961» не превратилось в «August 4 , 1961»
+    entities, start, typ = [], None, None
+    for i, tag in enumerate(tags + ["O"]):
+        if tag.startswith("I-") and tag[2:] == typ:
+            continue
+        if typ:
+            entities.append({"text": text[found[start].start():found[i - 1].end()], "type": typ})
+        start, typ = (i, tag[2:]) if tag != "O" else (None, None)
+    return jsonify({"tokens": [{"token": t.group(), "tag": g} for t, g in zip(found, tags)], "entities": entities})
+
+NER_MAX_TOKENS = 512
 
 # ── Extractive Summarization ──
 _STOP_WORDS = {"the", "a", "an", "is", "was", "are", "were", "be", "been", "being", "to", "of", "in", "for",
@@ -1218,6 +1393,32 @@ def recommender_recommend():
                                          "score": round(float(scores[i]), 3)} for i in top_idx]})
 
 # ── AI чат (LM Studio) ──
+CHAT_HISTORY_MSGS, CHAT_HISTORY_CHARS = 16, 12000
+THINK_RE = re.compile(r"<think>.*?(</think>|$)", re.S)
+
+def chat_history(raw):
+    """Прошлые реплики чата от клиента: только текст, роли user/assistant, последние сообщения
+    в пределах лимита символов (7B-модели с контекстом 4k иначе обрежут начало)."""
+    if not isinstance(raw, list):
+        return []
+    out, total = [], 0
+    for m in reversed(raw[-CHAT_HISTORY_MSGS:]):
+        if not isinstance(m, dict) or m.get("role") not in ("user", "assistant") or not isinstance(m.get("content"), str):
+            continue
+        # Рассуждения R1 в истории не нужны — только занимают контекст
+        text = THINK_RE.sub("", m["content"]).strip() if m["role"] == "assistant" else m["content"].strip()
+        if not text:
+            continue
+        if total + len(text) > CHAT_HISTORY_CHARS:
+            break
+        total += len(text)
+        out.append({"role": m["role"], "content": text})
+    out.reverse()
+    # Модели чата ожидают, что диалог начинается с пользователя
+    while out and out[0]["role"] != "user":
+        out.pop(0)
+    return out
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     d       = body()
@@ -1249,6 +1450,7 @@ def chat():
     msgs = []
     if model_cfg.get("system_prompt"):
         msgs.append({"role": "system", "content": model_cfg["system_prompt"]})
+    msgs += chat_history(d.get("history"))
     if image:
         msgs.append({"role": "user", "content": [{"type": "image_url", "image_url": {"url": image}},
                                                  {"type": "text", "text": message}]})
@@ -1282,9 +1484,14 @@ def chat():
                     chunk = line[6:]
                     if chunk.strip() == "[DONE]": break
                     try:
-                        tok = json.loads(chunk)["choices"][0]["delta"].get("content") or ""
-                    except (ValueError, KeyError, IndexError, TypeError):
+                        delta = json.loads(chunk)["choices"][0]["delta"]
+                        tok, think = delta.get("content") or "", delta.get("reasoning_content") or ""
+                    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
                         continue
+                    # DeepSeek R1 в LM Studio шлёт рассуждения отдельным полем — показываем, чтобы не было «тишины»
+                    if think:
+                        n_tokens += 1
+                        yield sse({"type": "think", "text": think})
                     if tok:
                         n_tokens += 1
                         yield sse({"type": "token", "text": tok})
@@ -1310,16 +1517,11 @@ def stop():
 
 @app.route("/api/unload", methods=["POST"])
 def unload_all():
-    """Выгружает все модели из LM Studio при закрытии приложения."""
-    loaded = lm_loaded(timeout=3)
-    if loaded is None:
-        return jsonify({"ok": True, "msg": "LM Studio офлайн"})
-    for model_id in loaded:
-        try:
-            requests.post(f"{LM_HOST}/api/v0/models/unload", json={"identifier": model_id}, timeout=5)
-        except requests.RequestException:
-            pass
-    return jsonify({"ok": True, "unloaded": loaded})
+    """Выгружает модели из LM Studio при закрытии приложения."""
+    if not (lm_in_memory() and lms_path()):
+        return jsonify({"ok": True})
+    lms_run("unload", "--all", timeout=15)
+    return jsonify({"ok": True})
 
 # ── Управление окном (пишем файл-команду, Qt читает по таймеру) ──
 _WIN_CMD = Path(os.environ.get("ALEXGPT_WIN_CMD") or DATA_DIR / ".win_cmd")
@@ -1335,22 +1537,15 @@ def win_control(action):
 
 @app.route("/api/lm/unload", methods=["POST"])
 def lm_unload():
-    names = lm_loaded(timeout=3)
+    names = lm_in_memory()
     if names is None:
         return jsonify({"ok": False, "msg": "LM Studio недоступен"})
     if not names:
         return jsonify({"ok": True, "msg": "Нет загруженных моделей"})
-    # Пробуем DELETE /api/v0/models/loaded (LM Studio 0.3+)
-    for mid in names:
-        try:
-            requests.delete(f"{LM_HOST}/api/v0/models/loaded/{mid}", timeout=5)
-        except requests.RequestException:
-            pass
-    still = lm_loaded(timeout=3)
-    if still is not None and len(still) < len(names):
-        return jsonify({"ok": True, "msg": f"Выгружено: {', '.join(names)}"})
-    lm_log(f"API выгрузки не поддерживается — модели: {', '.join(names)}", "WARNING")
-    return jsonify({"ok": False, "msg": f"Выгрузи вручную в LM Studio: {', '.join(names)}"})
+    if not lms_path():
+        return jsonify({"ok": False, "msg": f"Выгрузи вручную в LM Studio: {', '.join(names)}"})
+    code, _ = lms_run("unload", "--all")
+    return jsonify({"ok": code == 0, "msg": f"Выгружено: {', '.join(names)}" if code == 0 else "Не удалось выгрузить"})
 
 @app.route("/api/unload/<model>", methods=["POST"])
 def unload_model(model):

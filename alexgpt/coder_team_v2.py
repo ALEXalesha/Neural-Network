@@ -71,7 +71,8 @@ def ask(agent: str, system_prompt: str, user_prompt: str, max_tokens: int = 2048
                 timeout=300,
             )
             resp.raise_for_status()
-            text = resp.json()['choices'][0]['message']['content']
+            # content бывает None, если рассуждения R1 съели весь лимит токенов
+            text = resp.json()['choices'][0]['message'].get('content') or ''
             text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
             return text
         except requests.exceptions.ConnectionError:
@@ -157,7 +158,8 @@ def agent_architect(task: str) -> str:
             "Be concise and precise."
         ),
         user_prompt=f"Task: {task}\n\nCreate an implementation plan:",
-        max_tokens=1024,
+        # Архитектор — DeepSeek R1: сначала рассуждает (reasoning_content), потом пишет план
+        max_tokens=4096,
     )
     print(result, flush=True)
     return result

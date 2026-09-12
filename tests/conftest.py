@@ -39,9 +39,11 @@ def _offline(*a, **kw):
 
 
 @pytest.fixture(autouse=True)
-def lm_offline(monkeypatch):
+def lm_offline(monkeypatch, server):
     for name in ("get", "post", "delete"):
         monkeypatch.setattr(requests, name, _offline)
+    # Настоящий lms в тестах не трогаем: фаззер иначе запускал бы скачивание и удаление моделей
+    monkeypatch.setattr(server, "lms_path", lambda: None)
 
 
 def strict_json(body):

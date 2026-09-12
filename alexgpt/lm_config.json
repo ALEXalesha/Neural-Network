@@ -3,24 +3,36 @@
 
   "models": {
     "coder": {
+      "title": "Кодер: DeepSeek Coder 6.7B",
+      "about": "Пишет и исправляет код. Используется в чате для задач по программированию и в командах кодеров.",
+      "size_gb": 3.9,
       "model_id": "TheBloke/deepseek-coder-6.7B-instruct-GGUF/deepseek-coder-6.7b-instruct.Q4_K_S.gguf",
       "system_prompt": "Ты опытный программист. Пиши чистый, рабочий код с комментариями. Если задача на русском — комментарии тоже на русском.",
       "temperature": 0.1,
       "max_tokens": 4096
     },
     "reasoner": {
+      "title": "Аналитик: DeepSeek R1 Distill Qwen 7B",
+      "about": "Рассуждает пошагово: задачи, математика, «почему». Решает тесты по тексту.",
+      "size_gb": 4.7,
       "model_id": "lmstudio-community/DeepSeek-R1-Distill-Qwen-7B-GGUF/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf",
       "system_prompt": "Ты аналитик и эксперт в решении задач. Рассуждай пошагово, объясняй логику. Отвечай на русском.",
       "temperature": 0.6,
       "max_tokens": 4096
     },
     "writer": {
+      "title": "Писатель: Qwen2.5 7B Instruct",
+      "about": "Тексты, письма, пересказы, переводы. Ревьюер в командах кодеров.",
+      "size_gb": 4.7,
       "model_id": "lmstudio-community/Qwen2.5-7B-Instruct-GGUF/Qwen2.5-7B-Instruct-Q4_K_M.gguf",
       "system_prompt": "Ты профессиональный автор. Пиши грамотно, интересно и по делу. Отвечай на русском языке.",
       "temperature": 0.8,
       "max_tokens": 2048
     },
     "vision": {
+      "title": "Зрение: Qwen2-VL 7B",
+      "about": "Понимает картинки: фото задания в «Решить тест», вложения в чате.",
+      "size_gb": 7.4,
       "model_id": "lmstudio-community/Qwen2-VL-7B-Instruct-GGUF/Qwen2-VL-7B-Instruct-Q4_K_M.gguf",
       "system_prompt": "Опиши и проанализируй изображение подробно. Отвечай на русском.",
       "temperature": 0.5,

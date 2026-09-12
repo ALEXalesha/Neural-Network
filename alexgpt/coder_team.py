@@ -60,7 +60,7 @@ def ask(agent_name: str, system_prompt: str, user_prompt: str, max_tokens: int =
             timeout=300,
         )
         resp.raise_for_status()
-        text = resp.json()['choices'][0]['message']['content']
+        text = resp.json()['choices'][0]['message'].get('content') or ''
         # Убираем <think>...</think> блоки (DeepSeek-R1)
         text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
         return text
