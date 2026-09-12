@@ -685,6 +685,14 @@ def hf_spec(model_id):
     q = QUANT_RE.search(model_id.rsplit("/", 1)[-1])
     return f"https://huggingface.co/{owner}/{repo}" + (f"@{q.group(1).upper()}" if q else "")
 
+def lms_bundled(info):
+    """Модель, которую LM Studio поставляет вместе с собой (например, Nomic Embed): она лежит не в папке
+    моделей, а в .internal/bundled-models и удаляется только вместе с LM Studio."""
+    try:
+        return (Path.home() / ".lmstudio" / ".internal" / "bundled-models" / info.get("path", "")).is_file()
+    except (OSError, ValueError, TypeError):
+        return False
+
 @app.route("/api/lm/catalog")
 def lm_catalog():
     local     = lms_local_models()
@@ -712,7 +720,7 @@ def lm_catalog():
                "size_gb": round(m.get("sizeBytes", 0) / 1e9, 1), "type": m.get("type"),
                "params": m.get("paramsString"), "quant": (m.get("quantization") or {}).get("name"),
                "vision": bool(m.get("vision")), "loaded": m.get("modelKey") in in_memory,
-               "deletable": bool(model_files(m))}
+               "deletable": bool(model_files(m)), "builtin": lms_bundled(m)}
               for m in local or [] if m.get("path", "").lower() not in used]
     return jsonify({"online": lm_loaded() is not None, "lms": lms_path() is not None, "roles": roles, "others": others,
                     "disk_gb": round(sum(m.get("sizeBytes", 0) for m in local or []) / 1e9, 1)})

@@ -23,292 +23,346 @@
 })();
 </script>
 <style>
-/* ══ Темы: фон/поверхности/текст; акцент — отдельно (data-accent) ══ */
+@font-face{font-family:'Onest';font-style:normal;font-weight:400;font-display:swap;src:url(/static/fonts/onest-cyrillic-400-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Onest';font-style:normal;font-weight:400;font-display:swap;src:url(/static/fonts/onest-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Onest';font-style:normal;font-weight:500;font-display:swap;src:url(/static/fonts/onest-cyrillic-500-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Onest';font-style:normal;font-weight:500;font-display:swap;src:url(/static/fonts/onest-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Onest';font-style:normal;font-weight:600;font-display:swap;src:url(/static/fonts/onest-cyrillic-600-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Onest';font-style:normal;font-weight:600;font-display:swap;src:url(/static/fonts/onest-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Onest';font-style:normal;font-weight:700;font-display:swap;src:url(/static/fonts/onest-cyrillic-700-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Onest';font-style:normal;font-weight:700;font-display:swap;src:url(/static/fonts/onest-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Unbounded';font-style:normal;font-weight:600;font-display:swap;src:url(/static/fonts/unbounded-cyrillic-600-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Unbounded';font-style:normal;font-weight:600;font-display:swap;src:url(/static/fonts/unbounded-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Unbounded';font-style:normal;font-weight:700;font-display:swap;src:url(/static/fonts/unbounded-cyrillic-700-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Unbounded';font-style:normal;font-weight:700;font-display:swap;src:url(/static/fonts/unbounded-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/static/fonts/jetbrains-mono-cyrillic-400-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/static/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;src:url(/static/fonts/jetbrains-mono-cyrillic-500-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;src:url(/static/fonts/jetbrains-mono-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+/* ══ Темы. Фон, поверхности, текст и сетка; акцент задаётся отдельно (data-accent) ══ */
 :root{
-  --bg:#0d1117;--surf:#161b22;--surf2:#21262d;--border:#30363d;
-  --text:#e6edf3;--muted:#8b949e;--faint:#484f58;
-  --blue:#3b82f6;--green:#3fb950;--red:#f85149;--yellow:#d29922;
-  --accent:#7c3aed;--accent-rgb:124,58,237;--accent-hover:#6d28d9;--accent2:#3b82f6;
-  --shadow:rgba(0,0,0,.85);
-  --radius:10px;--sidebar:232px;--titlebar:40px;
+  --bg:#0c0e12;--surf:#13161c;--surf2:#1b1f27;--border:#262b35;--border2:#323846;
+  --text:#e8eaf0;--muted:#8a92a3;--faint:#4d5566;--grid:rgba(255,255,255,.028);
+  --blue:#4c8dff;--green:#3fb970;--red:#f2555a;--yellow:#e0a526;
+  --accent:#7c5cff;--accent-rgb:124,92,255;--accent-hover:#6a47f5;--accent2:#4c8dff;--on-accent:#fff;
+  --shadow:rgba(0,0,0,.7);
+  --radius:12px;--sidebar:240px;--titlebar:42px;
+  --f-ui:'Onest','Segoe UI',system-ui,sans-serif;--f-display:'Unbounded','Onest',sans-serif;
+  --f-mono:'JetBrains Mono',Consolas,monospace;
 }
-html[data-theme=midnight]{--bg:#0b1020;--surf:#121a2e;--surf2:#1b2540;--border:#26324f;--text:#e5e9f5;--muted:#94a0bd;--faint:#4a5675}
-html[data-theme=graphite]{--bg:#0a0a0a;--surf:#141414;--surf2:#1f1f1f;--border:#2c2c2c;--text:#ededed;--muted:#a1a1a1;--faint:#525252}
-html[data-theme=light]{--bg:#f6f8fa;--surf:#ffffff;--surf2:#eef1f4;--border:#d0d7de;--text:#1f2328;--muted:#59636e;--faint:#8c959f;
-  --green:#1a7f37;--red:#cf222e;--yellow:#9a6700;--blue:#0969da;--shadow:rgba(0,0,0,.25)}
-html[data-theme=sepia]{--bg:#f4ecd8;--surf:#fbf6ea;--surf2:#efe5cf;--border:#dccfb0;--text:#3b3024;--muted:#6f604c;--faint:#a39479;
-  --green:#3f7d20;--red:#b3261e;--yellow:#8a6100;--blue:#1f5fa8;--shadow:rgba(60,40,10,.3)}
+html[data-theme=midnight]{--bg:#0a0f1e;--surf:#111829;--surf2:#18223a;--border:#243150;--border2:#2f3f63;--text:#e4e9f6;--muted:#91a0c0;--faint:#4a5878;--grid:rgba(120,150,255,.045)}
+html[data-theme=graphite]{--bg:#0a0a0a;--surf:#121212;--surf2:#1c1c1c;--border:#2a2a2a;--border2:#363636;--text:#ededed;--muted:#9c9c9c;--faint:#555;--grid:rgba(255,255,255,.03)}
+html[data-theme=light]{--bg:#f3f4f7;--surf:#fff;--surf2:#eceef3;--border:#dcdfe6;--border2:#c9ced8;--text:#15181e;--muted:#5a6272;--faint:#9aa1ae;--grid:rgba(20,30,60,.05);
+  --green:#1a7f45;--red:#cf2e36;--yellow:#9a6700;--blue:#1f63d6;--shadow:rgba(20,30,60,.22)}
+html[data-theme=sepia]{--bg:#f2ead6;--surf:#fbf6ea;--surf2:#eee3cb;--border:#dccfb0;--border2:#cdbd98;--text:#3b3024;--muted:#6f604c;--faint:#a39479;--grid:rgba(90,60,20,.06);
+  --green:#3f7d20;--red:#b3261e;--yellow:#8a6100;--blue:#1f5fa8;--shadow:rgba(60,40,10,.25)}
 html[data-accent=blue]  {--accent:#3b82f6;--accent-rgb:59,130,246;--accent-hover:#2563eb;--accent2:#06b6d4}
 html[data-accent=green] {--accent:#16a34a;--accent-rgb:22,163,74;--accent-hover:#15803d;--accent2:#84cc16}
 html[data-accent=orange]{--accent:#ea580c;--accent-rgb:234,88,12;--accent-hover:#c2410c;--accent2:#f59e0b}
 html[data-accent=pink]  {--accent:#db2777;--accent-rgb:219,39,119;--accent-hover:#be185d;--accent2:#a855f7}
 html[data-accent=teal]  {--accent:#0d9488;--accent-rgb:13,148,136;--accent-hover:#0f766e;--accent2:#3b82f6}
+
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--text)}
+html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:var(--f-ui);font-size:14px;color:var(--text);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font-family:inherit}
+::selection{background:rgba(var(--accent-rgb),.35)}
 
-/* ══ Корневой контейнер (скруглённое окно) ══ */
-#app-root{
-  position:absolute;inset:8px;
-  border-radius:12px;overflow:hidden;
-  background:var(--bg);
-  box-shadow:0 12px 52px var(--shadow),0 0 0 1px var(--border);
-  display:flex;flex-direction:column;
-  transition:inset .1s,border-radius .1s;
-}
-html[data-max='1'] #app-root{inset:0;border-radius:0;box-shadow:none;}
+/* Линейные иконки из static/icons.svg: <svg class="ic"><use href="…#i-имя"/></svg> */
+.ic{width:1em;height:1em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+/* Крупный значок результата (тональность, спам, аномалии…) */
+.big-ic{display:flex;justify-content:center;padding:14px 0;color:var(--accent)}
+.big-ic .ic{font-size:64px;stroke-width:1.4}
+.big-ic.good{color:var(--green)}.big-ic.bad{color:var(--red)}.big-ic.warn{color:var(--yellow)}
 
-/* ══ Resize handles (по периметру) ══ */
+/* ══ Окно ══ */
+#app-root{position:absolute;inset:8px;border-radius:14px;overflow:hidden;background:var(--bg);
+  box-shadow:0 18px 60px var(--shadow),0 0 0 1px var(--border);display:flex;flex-direction:column;transition:inset .1s,border-radius .1s}
+html[data-max='1'] #app-root{inset:0;border-radius:0;box-shadow:none}
 .rz{position:absolute;z-index:9998;background:transparent}
-.rz-n {top:0;left:12px;right:12px;height:5px;cursor:n-resize}
-.rz-s {bottom:0;left:12px;right:12px;height:5px;cursor:s-resize}
-.rz-e {right:0;top:12px;bottom:12px;width:5px;cursor:e-resize}
-.rz-w {left:0;top:12px;bottom:12px;width:5px;cursor:w-resize}
+.rz-n{top:0;left:12px;right:12px;height:5px;cursor:n-resize}
+.rz-s{bottom:0;left:12px;right:12px;height:5px;cursor:s-resize}
+.rz-e{right:0;top:12px;bottom:12px;width:5px;cursor:e-resize}
+.rz-w{left:0;top:12px;bottom:12px;width:5px;cursor:w-resize}
 .rz-ne{top:0;right:0;width:14px;height:14px;cursor:ne-resize}
 .rz-nw{top:0;left:0;width:14px;height:14px;cursor:nw-resize}
 .rz-se{bottom:0;right:0;width:14px;height:14px;cursor:se-resize}
 .rz-sw{bottom:0;left:0;width:14px;height:14px;cursor:sw-resize}
 
-/* ══ Titlebar ══ */
-#titlebar{
-  height:var(--titlebar);min-height:var(--titlebar);
-  background:var(--bg);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;
-  flex-shrink:0;user-select:none;
-}
-#tb-logo{display:flex;align-items:center;gap:8px;padding:0 14px;flex-shrink:0;font-size:13px;font-weight:600}
-#tb-logo .ico{font-size:18px}
-#tb-logo .name{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-#tb-drag{flex:1;height:100%;cursor:default}/* draggable zone */
-#tb-pagetitle{font-size:12px;color:var(--faint);padding:0 12px;flex-shrink:0;pointer-events:none}
+/* ══ Заголовок окна ══ */
+#titlebar{height:var(--titlebar);min-height:var(--titlebar);background:var(--surf);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;flex-shrink:0;user-select:none}
+#tb-logo{display:flex;align-items:center;gap:10px;padding:0 16px;flex-shrink:0;height:100%}
+.logo-mark{width:24px;height:24px;display:block;filter:drop-shadow(0 2px 6px rgba(var(--accent-rgb),.45))}
+#tb-logo .name{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.2px;color:var(--text)}
+#tb-drag{flex:1;height:100%;cursor:default}
+#tb-pagetitle{font-size:12px;color:var(--faint);padding:0 14px;flex-shrink:0;pointer-events:none}
 #tb-controls{display:flex;align-items:stretch;flex-shrink:0;height:100%}
-.tb-btn{width:46px;height:100%;border:none;background:transparent;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s}
+.tb-btn{width:46px;height:100%;border:none;background:transparent;color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s}
 .tb-btn:hover{background:var(--surf2);color:var(--text)}
 .tb-close:hover{background:#e81123!important;color:#fff!important}
-.tb-max-icon{font-size:12px}
+.tb-max-icon{display:flex}
 
-/* ══ App body ══ */
+/* ══ Тело ══ */
 #app-body{flex:1;display:flex;overflow:hidden;min-height:0}
 
-/* ══ Sidebar ══ */
-#sidebar{width:var(--sidebar);min-width:var(--sidebar);background:var(--surf);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
-.logo{padding:16px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
-.logo-icon{font-size:22px}
-.logo-text{font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.nav-group{padding:8px 0}
-.nav-label{padding:5px 16px;font-size:10.5px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.6px}
-.nav-label-btn{display:flex;align-items:center;justify-content:space-between}
-.chat-sess-item.active{background:none!important}
-.nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;cursor:pointer;border-radius:6px;margin:1px 6px;color:var(--muted);transition:all .13s;font-size:13px}
+/* ══ Меню слева ══ */
+#sidebar{width:var(--sidebar);min-width:var(--sidebar);background:var(--surf);border-right:1px solid var(--border);display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden;transition:width .18s,min-width .18s}
+.nav-group{padding:6px 0 8px}
+.nav-label{padding:10px 20px 5px;font-family:var(--f-mono);font-size:10px;font-weight:500;color:var(--faint);text-transform:uppercase;letter-spacing:1.2px}
+.nav-label-btn{display:flex;align-items:center;justify-content:space-between;padding-right:14px}
+.nav-add{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px}
+.nav-add:hover{border-color:var(--accent);color:var(--accent)}
+.nav-item{position:relative;display:flex;align-items:center;gap:11px;padding:7px 12px;cursor:pointer;border-radius:8px;margin:1px 10px;color:var(--muted);
+  transition:background .12s,color .12s;font-size:13px;line-height:1.3}
 .nav-item:hover{background:var(--surf2);color:var(--text)}
-.nav-item.active{background:rgba(var(--accent-rgb),.15);color:var(--accent)}
-.nav-item .icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
-.sidebar-footer{margin-top:auto;padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--faint)}
+.nav-item.active{background:rgba(var(--accent-rgb),.13);color:var(--text)}
+.nav-item.active::before{content:'';position:absolute;left:-10px;top:7px;bottom:7px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.nav-item.active .icon{color:var(--accent)}
+.nav-item .icon{font-size:17px;width:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-sess-item{padding-left:40px!important;font-size:12px!important}
+.chat-sess-item .icon{font-size:14px}
+.chat-sess-item .sess-act{opacity:0;padding:0 3px;cursor:pointer;display:flex;transition:opacity .12s}
+.chat-sess-item:hover .sess-act{opacity:.6}.chat-sess-item .sess-act:hover{opacity:1;color:var(--text)}
+.chat-sess-item.active{background:none!important;color:var(--text)}
+.chat-sess-item.active::before{display:none}
+#lm-models-nav .lm-live{padding:3px 12px 3px 40px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
+#lm-models-nav .lm-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:12px 20px;border-top:1px solid var(--border);font-family:var(--f-mono);font-size:10.5px;color:var(--faint)}
 
-/* ══ Main ══ */
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-#topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:0 22px;height:48px;display:flex;align-items:center;gap:14px;flex-shrink:0}
-#page-title{font-size:15px;font-weight:600;flex:1}
-.badge{display:inline-flex;align-items:center;gap:5px;background:var(--surf2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--muted)}
-.badge.green{border-color:var(--green);color:var(--green)}
-.badge.red{border-color:var(--red);color:var(--red)}
-#content{flex:1;overflow-y:auto;padding:22px}
+/* ══ Основная часть ══ */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{background:var(--bg);border-bottom:1px solid var(--border);padding:0 26px 0 14px;height:58px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#page-title{font-family:var(--f-display);font-size:16px;font-weight:600;flex:1;letter-spacing:.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:4px 11px;
+  font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.badge::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.badge.green{color:var(--green);border-color:rgba(63,185,112,.4)}.badge.green::before{background:var(--green);box-shadow:0 0 8px var(--green)}
+.badge.red{color:var(--red);border-color:rgba(242,85,90,.4)}.badge.red::before{background:var(--red)}
+.badge.gpu{color:var(--accent);border-color:rgba(var(--accent-rgb),.4)}.badge.gpu::before{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+#content{flex:1;overflow-y:auto;padding:26px 28px 40px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;background-position:-1px -1px}
 
-/* ══ Section visibility ══ */
-.section{display:none}.section.active{display:block}
+/* ══ Разделы: появляются с лёгким каскадом ══ */
+.section{display:none}
+.section.active{display:block}
+.section.active>*{animation:rise .32s cubic-bezier(.2,.7,.2,1) both}
+.section.active>*:nth-child(2){animation-delay:.04s}.section.active>*:nth-child(3){animation-delay:.08s}
+.section.active>*:nth-child(4){animation-delay:.12s}.section.active>*:nth-child(5){animation-delay:.16s}
+@media (prefers-reduced-motion:reduce){.section.active>*{animation:none}}
 
-/* ══ Cards ══ */
-.grid{display:grid;gap:14px}
-.grid-cards{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+/* ══ Карточки ══ */
+.grid{display:grid;gap:12px}
+.grid-cards{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
 .grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
-.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color .2s}
-.card:hover{border-color:var(--accent)}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:border-color .15s,transform .15s,box-shadow .15s}
+.card:hover{border-color:rgba(var(--accent-rgb),.6);transform:translateY(-2px);box-shadow:0 8px 24px -12px rgba(var(--accent-rgb),.5)}
 .card-header{display:flex;align-items:flex-start;gap:12px}
-.card-icon{font-size:26px}.card-title{font-size:14px;font-weight:600}.card-desc{font-size:12px;color:var(--muted);margin-top:2px}
-.status-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:12px;white-space:nowrap}
-.pill-ok{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.3)}
-.pill-miss{background:rgba(248,81,73,.1);color:var(--red);border:1px solid rgba(248,81,73,.3)}
-.go-btn{display:block;width:100%;margin-top:12px;padding:7px;background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.3);color:var(--accent);border-radius:6px;cursor:pointer;font-size:12px;transition:all .15s;text-align:center}
+.card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;
+  background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+.card-title{font-size:14px;font-weight:600}.card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-mono);font-size:10.5px;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.pill-ok{background:rgba(63,185,112,.12);color:var(--green)}
+.pill-miss{background:rgba(242,85,90,.12);color:var(--red)}
+.go-btn{display:block;width:100%;margin-top:12px;padding:7px;background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.3);color:var(--accent);border-radius:8px;cursor:pointer;font-size:12px;text-align:center}
 .go-btn:hover{background:rgba(var(--accent-rgb),.2)}
 
-/* ══ Tool layout ══ */
-.tool-wrap{display:flex;gap:18px;align-items:flex-start}
-.tool-input{flex:0 0 370px}
+/* ══ Раскладка инструментов ══ */
+.tool-wrap{display:flex;gap:16px;align-items:flex-start}
+.tool-input{flex:0 0 380px;min-width:0}
 .tool-output{flex:1;min-width:0}
-@media(max-width:820px){.tool-wrap{flex-direction:column}.tool-input{flex:none;width:100%}}
-.panel{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
-.panel-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+@media(max-width:860px){.tool-wrap{flex-direction:column}.tool-input{flex:none;width:100%}}
+.panel{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.panel-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:9px}
+.panel-title>.ic:first-child{color:var(--accent);font-size:17px}
+/* Иконка и текст заголовка держатся вместе, кнопки справа (раньше space-between разносил иконку и текст) */
+.panel-title{justify-content:flex-start!important}
+.panel-title>:last-child:not(:first-child):not(span){margin-left:auto}
 
-/* ══ Forms ══ */
-.form-group{margin-bottom:12px}
-label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
-input[type=text],input[type=number],textarea,select{
-  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
-  padding:8px 11px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s;font-family:inherit}
-input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{border-color:var(--accent)}
-textarea{resize:vertical;min-height:86px}
-select option{background:var(--surf)}
+/* ══ Поля ввода ══ */
+.form-group{margin-bottom:14px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+input[type=text],input[type=number],input[type=password],textarea,select{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;
+  padding:9px 12px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s}
+input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+/* Своя стрелка у списков: у системной не было отступа от края */
+select{appearance:none;-webkit-appearance:none;padding-right:38px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a92a3' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;background-size:15px}
+select option{background:var(--surf);color:var(--text)}
 input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
 
-/* ══ Buttons ══ */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .13s}
-.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-hover)}
-.btn-primary:disabled{background:var(--surf2);color:var(--faint);cursor:not-allowed}
-.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(248,81,73,.4)}.btn-danger:hover{background:rgba(248,81,73,.1)}
-.btn-sm{padding:4px 11px;font-size:12px}
-.gpt-lang-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+/* ══ Кнопки ══ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;border:none;
+  transition:background .12s,border-color .12s,color .12s,transform .06s;white-space:nowrap}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn .ic{font-size:15px}
+.btn-primary{background:var(--accent);color:var(--on-accent);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 14px -6px rgba(var(--accent-rgb),.7)}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-primary:disabled{background:var(--surf2);color:var(--faint);cursor:not-allowed;box-shadow:none}
+.btn-outline{background:var(--surf);color:var(--text);border:1px solid var(--border2)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(242,85,90,.4)}.btn-danger:hover{background:rgba(242,85,90,.1)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-sm{padding:5px 11px;font-size:12px;border-radius:8px}
+.gpt-lang-btn.active,.ts-mode-btn.active{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 
-/* ══ Output ══ */
-.result-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;min-height:56px;font-size:13px;line-height:1.6}
-.result-big{font-size:30px;font-weight:700;color:var(--accent);text-align:center;padding:22px}
-pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;font-size:12px;line-height:1.6;white-space:pre-wrap;font-family:'Consolas','Courier New',monospace}
-
-/* ══ Bars ══ */
-.score-bar-wrap{margin:4px 0}
-.score-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+/* ══ Результаты ══ */
+.result-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;min-height:56px;font-size:13px;line-height:1.6}
+.result-big{font-family:var(--f-display);font-size:30px;font-weight:700;color:var(--accent);text-align:center;padding:22px}
+pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;overflow-x:auto;font-size:12px;line-height:1.6;white-space:pre-wrap;font-family:var(--f-mono)}
+.score-bar-wrap{margin:6px 0}
+.score-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.score-label span:last-child{font-family:var(--f-mono)}
 .score-bar{height:8px;background:var(--surf2);border-radius:4px;overflow:hidden}
-.score-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.score-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
 .fill-red{background:var(--red)}.fill-gray{background:var(--faint)}.fill-green{background:var(--green)}
-
-/* ══ GAN images ══ */
 .img-grid{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0}
-.img-grid img{width:96px;height:96px;border-radius:6px;border:1px solid var(--border);image-rendering:pixelated}
+.img-grid img{width:96px;height:96px;border-radius:8px;border:1px solid var(--border);image-rendering:pixelated}
+#mnist-canvas{display:block;border:1px solid var(--border2);border-radius:12px;cursor:crosshair;background:#0a0a0a;touch-action:none}
 
-/* ══ MNIST ══ */
-#mnist-canvas{display:block;border:2px solid var(--border);border-radius:8px;cursor:crosshair;background:#111;touch-action:none}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surf2);color:var(--muted);border:1px solid var(--border);white-space:nowrap}
-.chip-green{background:rgba(63,185,80,.15);color:var(--green);border-color:transparent}
-.chip-blue{background:rgba(59,130,246,.15);color:var(--blue);border-color:transparent}
-.chip-red{background:rgba(248,81,73,.12);color:var(--red);border-color:transparent}
+/* ══ Метки и списки моделей ══ */
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-mono);font-size:10.5px;padding:2px 8px;border-radius:6px;background:var(--surf2);color:var(--muted);border:1px solid var(--border);white-space:nowrap}
+.chip .ic{font-size:12px}
+.chip-green{background:rgba(63,185,112,.14);color:var(--green);border-color:transparent}
+.chip-blue{background:rgba(76,141,255,.14);color:var(--blue);border-color:transparent}
+.chip-red{background:rgba(242,85,90,.12);color:var(--red);border-color:transparent}
 .lm-list{display:flex;flex-direction:column;gap:8px}
-.lm-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap}
-.lm-icon{font-size:22px;width:30px;text-align:center}
+.lm-row{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;flex-wrap:wrap;transition:border-color .15s}
+.lm-row:hover{border-color:var(--border2)}
+.lm-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;background:rgba(var(--accent-rgb),.12);color:var(--accent);flex-shrink:0}
 .lm-main{flex:1;min-width:220px}
 .lm-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .lm-about{font-size:12px;color:var(--muted);margin-top:3px}
-.lm-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center}
-.lm-repo{font-size:11px;color:var(--faint);font-family:monospace}
-.lm-actions{display:flex;gap:6px;flex-wrap:wrap}
-.lm-progress{display:none;margin-top:8px}
+.lm-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center}
+.lm-repo{font-size:10.5px;color:var(--faint);font-family:var(--f-mono)}
+.lm-note{font-size:11.5px;color:var(--faint);max-width:210px;text-align:right;line-height:1.35;display:flex;gap:6px;align-items:center}
+.lm-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.lm-progress{display:none;margin-top:9px}
 .lm-bar{height:6px;background:var(--surf2);border-radius:3px;overflow:hidden}
 .lm-bar div{height:100%;width:0;background:var(--accent);transition:width .3s}
-.lm-line{font-size:11px;color:var(--muted);margin-top:4px;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.digit-conf{display:flex;align-items:center;gap:7px;margin:3px 0;font-size:12px}
+.lm-line{font-size:11px;color:var(--muted);margin-top:5px;font-family:var(--f-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.digit-conf{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12px;font-family:var(--f-mono)}
 .digit-conf span:first-child{width:14px;text-align:right;color:var(--muted)}
-.digit-conf .bar{flex:1;height:13px;background:var(--surf2);border-radius:3px;overflow:hidden}
+.digit-conf .bar{flex:1;height:12px;background:var(--surf2);border-radius:3px;overflow:hidden}
 .digit-conf .bar-fill{height:100%;background:var(--accent);transition:width .3s}
-.digit-conf span:last-child{width:36px;text-align:right;color:var(--muted)}
+.digit-conf span:last-child{width:40px;text-align:right;color:var(--muted)}
 
-/* ══ Chat ══ */
-#chat-messages{height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:2px 0}
-.msg{max-width:82%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-.msg-user{align-self:flex-end;background:rgba(var(--accent-rgb),.2);border:1px solid rgba(var(--accent-rgb),.3)}
-.msg-bot{align-self:flex-start;background:var(--surf2);border:1px solid var(--border)}
-.model-badge{font-size:10px;background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:1px 7px;display:inline-block;margin-bottom:3px}
-.think{margin-bottom:8px;border-left:2px solid var(--border);padding-left:9px}
-.think summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+/* ══ Чат ══ */
+#chat-messages{height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 2px}
+.msg{max-width:82%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg-user{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px}
+.msg-bot{align-self:flex-start;background:var(--surf2);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg-bot pre,.msg-bot code{font-family:var(--f-mono);font-size:12px}
+.msg-bot pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;white-space:pre}
+.model-badge{font-family:var(--f-mono);font-size:10px;background:rgba(76,141,255,.12);color:var(--blue);border:1px solid rgba(76,141,255,.3);border-radius:6px;padding:1px 7px;display:inline-block;margin-bottom:3px}
+.think{margin-bottom:8px;border-left:2px solid rgba(var(--accent-rgb),.5);padding-left:10px}
+.think summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none;display:flex;align-items:center;gap:6px}
 .think-body{color:var(--muted);font-size:12px;white-space:pre-wrap;max-height:220px;overflow-y:auto;margin-top:4px}
-.chat-input-row{display:flex;gap:7px;margin-top:10px}
-.chat-input-row textarea{min-height:40px;max-height:110px;resize:none}
+.chat-input-row{display:flex;gap:8px;margin-top:12px}
+.chat-input-row textarea{min-height:44px;max-height:120px;resize:none}
 
-/* ══ Coder ══ */
-#coder-log{height:240px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-family:monospace;line-height:1.7}
+/* ══ Кодеры, графики, переводчик ══ */
+#coder-log{height:260px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:12px;font-family:var(--f-mono);line-height:1.7}
 .log-line{color:var(--muted)}.log-line.ok{color:var(--green)}.log-line.err{color:var(--red)}.log-line.head{color:var(--blue);font-weight:600}
-
-/* ══ TimeSeries chart ══ */
-#ts-chart{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;min-height:150px;display:flex;align-items:flex-end;gap:5px}
+#ts-chart{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;min-height:160px;display:flex;align-items:flex-end;gap:6px}
 .ts-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
-.ts-bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:height .5s ease}
-.ts-val{font-size:10px;color:var(--text)}.ts-day{font-size:10px;color:var(--faint)}
+.ts-bar{width:100%;border-radius:5px 5px 0 0;min-height:4px;transition:height .5s ease}
+.ts-val{font-size:10px;color:var(--text);font-family:var(--f-mono)}.ts-day{font-size:10px;color:var(--faint)}
+.trans-wrap{display:flex;gap:12px;align-items:flex-start}
+.trans-panel{flex:1;min-width:0}
+.trans-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding-top:28px}
+.dir-btn{font-size:17px;cursor:pointer;background:var(--surf2);border:1px solid var(--border);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:border-color .13s,color .13s}
+.dir-btn:hover{border-color:var(--accent);color:var(--accent)}
 
-/* ══ Translator ══ */
-.trans-wrap{display:flex;gap:10px;align-items:flex-start}
-.trans-panel{flex:1}
-.trans-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding-top:26px}
-.dir-btn{font-size:18px;cursor:pointer;background:var(--surf2);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;transition:all .13s}
-.dir-btn:hover{border-color:var(--accent)}
-
-/* ══ Stats dashboard ══ */
-.stat-row{display:flex;gap:14px;margin-bottom:18px}
-.stat{flex:1;background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
-.stat-num{font-size:26px;font-weight:700;color:var(--accent)}.stat-label{font-size:11px;color:var(--muted);margin-top:3px}
-
-/* ══ History ══ */
+/* ══ Цифры на главной ══ */
+.stat-row{display:flex;gap:12px;margin-bottom:22px}
+.stat{flex:1;background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column-reverse;gap:4px}
+.stat-num{font-family:var(--f-mono);font-size:24px;font-weight:500;color:var(--text)}.stat-label{font-family:var(--f-mono);font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1px}
 .history{max-height:180px;overflow-y:auto}
-.hist-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.hist-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--f-mono)}
 .hist-expr{color:var(--muted);flex:1}.hist-res{color:var(--accent);font-weight:600}
-.copy-btn{font-size:11px;padding:2px 6px;background:var(--surf2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--muted)}
+.copy-btn{font-size:11px;padding:2px 7px;background:var(--surf2);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--muted)}
 .copy-btn:hover{color:var(--text)}
-
-/* ══ Digit selector ══ */
-.digit-sel{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}
-.d-btn{width:34px;height:34px;border-radius:6px;border:1px solid var(--border);background:var(--surf2);color:var(--text);cursor:pointer;font-size:13px;transition:all .13s;display:flex;align-items:center;justify-content:center}
+.digit-sel{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.d-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surf2);color:var(--text);cursor:pointer;font-size:13px;font-family:var(--f-mono);display:flex;align-items:center;justify-content:center}
 .d-btn:hover{border-color:var(--accent)}
 .d-btn.sel{background:rgba(var(--accent-rgb),.2);border-color:var(--accent);color:var(--accent)}
-
-/* ══ Spinner ══ */
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
 
-/* ══ Toast ══ */
-#toasts{position:absolute;bottom:20px;right:20px;display:flex;flex-direction:column;gap:7px;z-index:9999}
-.toast{background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;max-width:300px;animation:fadeIn .18s ease}
-.toast.err{border-color:var(--red);color:var(--red)}.toast.ok{border-color:var(--green);color:var(--green)}
+/* ══ Уведомления ══ */
+#toasts{position:absolute;bottom:22px;right:22px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+.toast{background:var(--surf);border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:10px;padding:10px 14px;font-size:13px;max-width:320px;
+  box-shadow:0 10px 30px -10px var(--shadow);animation:rise .2s ease}
+.toast.err{border-left-color:var(--red)}.toast.ok{border-left-color:var(--green)}.toast.warn{border-left-color:var(--yellow)}
 
-/* ══ Поиск по разделам и компактный сайдбар ══ */
-.nav-search{margin:10px 10px 2px;position:relative}
-.nav-search input{padding:6px 10px 6px 28px!important;font-size:12px!important;background:var(--bg)}
-.nav-search::before{content:'🔎';position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;opacity:.6}
+/* ══ Поиск по разделам и компактное меню ══ */
+.nav-search{margin:14px 12px 4px;position:relative}
+.nav-search input{padding:7px 10px 7px 32px!important;font-size:12px!important;background:var(--bg)}
+.nav-search::before{content:'';position:absolute;left:11px;top:50%;width:14px;height:14px;transform:translateY(-50%);background:var(--faint);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat}
 .nav-item.hidden,.nav-group.hidden{display:none}
-#sb-toggle{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:4px 6px;border-radius:6px}
-#sb-toggle:hover{background:var(--surf2);color:var(--text)}
-html[data-sidebar=mini]{--sidebar:62px}
-html[data-sidebar=mini] .nav-item{font-size:0;justify-content:center;padding:8px 0}
-html[data-sidebar=mini] .nav-item .icon{font-size:17px;width:auto}
-html[data-sidebar=mini] .nav-label,html[data-sidebar=mini] .nav-label-btn,html[data-sidebar=mini] .nav-search,html[data-sidebar=mini] .logo-text,
+#sb-toggle{background:none;border:1px solid transparent;color:var(--muted);font-size:18px;cursor:pointer;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+#sb-toggle:hover{background:var(--surf2);border-color:var(--border);color:var(--text)}
+html[data-sidebar=mini]{--sidebar:66px}
+html[data-sidebar=mini] .nav-item{font-size:0;justify-content:center;padding:9px 0}
+html[data-sidebar=mini] .nav-item .icon{font-size:18px;width:auto}
+html[data-sidebar=mini] .nav-label,html[data-sidebar=mini] .nav-label-btn,html[data-sidebar=mini] .nav-search,
 html[data-sidebar=mini] #chat-sessions-list,html[data-sidebar=mini] #lm-models-nav,html[data-sidebar=mini] .sidebar-footer{display:none}
-html[data-sidebar=mini] .nav-group{padding:4px 0;border-bottom:1px solid var(--border)}
-html[data-sidebar=mini] .logo{justify-content:center;padding:14px 0 10px}
+html[data-sidebar=mini] .nav-group{padding:6px 0;border-bottom:1px solid var(--border)}
 
-/* ══ Дашборд ══ */
-.hero{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-.hero h2{font-size:20px;font-weight:700}.hero p{color:var(--muted);font-size:13px;margin-top:3px}
-.quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px}
-.quick-tile{background:linear-gradient(135deg,rgba(var(--accent-rgb),.14),rgba(var(--accent-rgb),.04));border:1px solid rgba(var(--accent-rgb),.28);
-  border-radius:var(--radius);padding:14px;cursor:pointer;transition:transform .12s,border-color .12s}
-.quick-tile:hover{transform:translateY(-2px);border-color:var(--accent)}
-.quick-tile .q-ico{font-size:24px}.quick-tile .q-name{font-weight:600;margin-top:6px;font-size:13px}
-.quick-tile .q-desc{font-size:11px;color:var(--muted);margin-top:2px}
-.group-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 10px}
+/* ══ Главная ══ */
+.hero{position:relative;margin-bottom:22px;padding:26px 28px;border-radius:16px;overflow:hidden;border:1px solid var(--border);
+  background:radial-gradient(120% 140% at 100% 0%,rgba(var(--accent-rgb),.22),transparent 55%),var(--surf)}
+.hero::after{content:'';position:absolute;right:-40px;top:-40px;width:220px;height:220px;opacity:.55;
+  background:radial-gradient(circle,rgba(var(--accent-rgb),.5) 1.5px,transparent 2px) 0 0/18px 18px;
+  -webkit-mask:radial-gradient(circle,#000,transparent 70%)}
+.hero h2{font-family:var(--f-display);font-size:24px;font-weight:700;letter-spacing:-.2px;position:relative}
+.hero p{color:var(--muted);font-size:13px;margin-top:8px;position:relative}
+.quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+.quick-tile{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:15px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
+.quick-tile:hover{transform:translateY(-3px);border-color:rgba(var(--accent-rgb),.7);box-shadow:0 10px 26px -14px rgba(var(--accent-rgb),.8)}
+.quick-tile .q-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;
+  background:linear-gradient(140deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 6px 16px -8px rgba(var(--accent-rgb),.9)}
+.quick-tile .q-name{font-weight:600;margin-top:12px;font-size:13px}
+.quick-tile .q-desc{font-size:11.5px;color:var(--muted);margin-top:3px}
+.group-title{font-family:var(--f-mono);font-size:10.5px;font-weight:500;color:var(--faint);text-transform:uppercase;letter-spacing:1.2px;margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+.group-title::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* ══ Настройки ══ */
-.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-.theme-card{border:2px solid var(--border);border-radius:10px;padding:0;cursor:pointer;overflow:hidden;background:none;text-align:left;color:inherit;font:inherit}
-.theme-card.sel{border-color:var(--accent)}
-.theme-prev{height:62px;display:flex}
-.theme-prev .p-side{width:30%}.theme-prev .p-main{flex:1;padding:8px;display:flex;flex-direction:column;gap:5px}
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.theme-card{border:2px solid var(--border);border-radius:12px;padding:0;cursor:pointer;overflow:hidden;background:none;text-align:left;color:inherit;font:inherit;transition:border-color .15s,transform .15s}
+.theme-card:hover{transform:translateY(-2px)}
+.theme-card.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2)}
+.theme-prev{height:64px;display:flex}
+.theme-prev .p-side{width:30%}.theme-prev .p-main{flex:1;padding:9px;display:flex;flex-direction:column;gap:5px}
 .theme-prev .p-line{height:6px;border-radius:3px}
-.theme-name{padding:7px 10px;font-size:12px;font-weight:600;background:var(--surf)}
-.swatches{display:flex;gap:10px;flex-wrap:wrap}
-.swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;outline:2px solid transparent}
+.theme-name{padding:8px 11px;font-size:12px;font-weight:600;background:var(--surf)}
+.swatches{display:flex;gap:12px;flex-wrap:wrap}
+.swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid var(--surf);outline:2px solid transparent;transition:transform .12s}
+.swatch:hover{transform:scale(1.08)}
 .swatch.sel{outline-color:var(--text)}
-.set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 0;border-bottom:1px solid var(--border)}
 .set-row:last-child{border-bottom:none}
-.set-row .s-title{font-weight:600;font-size:13px}.set-row .s-desc{font-size:12px;color:var(--muted);margin-top:2px}
-.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.seg button{background:none;border:none;color:var(--muted);padding:6px 12px;cursor:pointer;font-size:12px}
-.seg button.sel{background:var(--accent);color:#fff}
-kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--muted)}
+.set-row .s-title{font-weight:600;font-size:13px}.set-row .s-desc{font-size:12px;color:var(--muted);margin-top:3px}
+/* Переключатель: у кнопок свой отступ, текст не упирается в рамку */
+.seg{display:inline-flex;flex-shrink:0;gap:3px;padding:3px;background:var(--bg);border:1px solid var(--border);border-radius:10px}
+.seg button{background:none;border:none;color:var(--muted);padding:6px 14px;cursor:pointer;font-size:12px;border-radius:7px;white-space:nowrap}
+.seg button:hover{color:var(--text)}
+.seg button.sel{background:var(--accent);color:var(--on-accent)}
+kbd{font-family:var(--f-mono);font-size:10.5px;border:1px solid var(--border2);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--muted)}
 
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--faint)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--faint);background-clip:padding-box}
 </style>
 </head>
 <body>
@@ -328,15 +382,15 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
   <!-- ══ TITLEBAR ══ -->
   <div id="titlebar">
     <div id="tb-logo">
-      <span class="ico">🧠</span>
+      <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M16 7 8.5 25M16 7l7.5 18M11.6 17.5h8.8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/><g fill="#fff"><circle cx="16" cy="7" r="2.6"/><circle cx="8.5" cy="25" r="2.6"/><circle cx="23.5" cy="25" r="2.6"/><circle cx="11.6" cy="17.5" r="2"/><circle cx="20.4" cy="17.5" r="2"/></g></svg>
       <span class="name">AlexGPT</span>
     </div>
     <div id="tb-drag"></div>
     <div id="tb-pagetitle">Главная</div>
     <div id="tb-controls">
-      <button class="tb-btn" id="btn-min"   title="Свернуть">─</button>
-      <button class="tb-btn" id="btn-max"   title="Развернуть"><span class="tb-max-icon" id="max-icon">☐</span></button>
-      <button class="tb-btn tb-close" id="btn-close" title="Скрыть в трей">✕</button>
+      <button class="tb-btn" id="btn-min"   title="Свернуть"><svg class="ic"><use href="/static/icons.svg#i-minus"/></svg></button>
+      <button class="tb-btn" id="btn-max"   title="Развернуть"><span class="tb-max-icon" id="max-icon"><svg class="ic"><use href="/static/icons.svg#i-square"/></svg></span></button>
+      <button class="tb-btn tb-close" id="btn-close" title="Скрыть в трей"><svg class="ic"><use href="/static/icons.svg#i-x"/></svg></button>
     </div>
   </div>
 
@@ -345,67 +399,63 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
     <!-- ─── SIDEBAR ─── -->
     <nav id="sidebar">
-      <div class="logo">
-        <span class="logo-icon">🧠</span>
-        <span class="logo-text">AlexGPT</span>
-      </div>
       <div class="nav-search"><input type="text" id="nav-search" placeholder="Найти раздел…  Ctrl+K" oninput="filterNav(this.value)" onkeydown="navSearchKey(event)"></div>
 
       <div class="nav-group">
         <div class="nav-label">Главная</div>
-        <div class="nav-item active" onclick="go('dashboard')"><span class="icon">🏠</span>Главная</div>
-        <div class="nav-item" onclick="go('math')"><span class="icon">🧮</span>Калькулятор</div>
+        <div class="nav-item active" onclick="go('dashboard')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-house"/></svg></span>Главная</div>
+        <div class="nav-item" onclick="go('math')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-calculator"/></svg></span>Калькулятор</div>
       </div>
 
       <div class="nav-group">
         <div class="nav-label nav-label-btn">
           AI-ассистент (LM Studio)
-          <button class="btn btn-outline btn-sm" style="padding:2px 7px;font-size:11px" onclick="newChatSession()" title="Новый чат">＋</button>
+          <button class="nav-add" onclick="newChatSession()" title="Новый чат"><svg class="ic"><use href="/static/icons.svg#i-plus"/></svg></button>
         </div>
-        <div class="nav-item" onclick="go('chat')"><span class="icon">🤖</span>Умный чат</div>
+        <div class="nav-item" onclick="go('chat')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-bot"/></svg></span>Умный чат</div>
         <div id="chat-sessions-list"></div>
-        <div class="nav-item" onclick="go('homework')"><span class="icon">📚</span>Решить тест (МЭШ)</div>
-        <div class="nav-item" onclick="go('coder')"><span class="icon">👾</span>Команда кодеров</div>
-        <div class="nav-item" onclick="go('coder-v2')"><span class="icon">🔁</span>Команда v2 (авто-цикл)</div>
-        <div class="nav-item" onclick="go('code-review')"><span class="icon">🔍</span>Проверка кода</div>
-        <div class="nav-item" onclick="go('lm-models')"><span class="icon">📦</span>Модели: скачать и удалить</div>
+        <div class="nav-item" onclick="go('homework')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-graduation-cap"/></svg></span>Решить тест (МЭШ)</div>
+        <div class="nav-item" onclick="go('coder')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-code-xml"/></svg></span>Команда кодеров</div>
+        <div class="nav-item" onclick="go('coder-v2')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-repeat-2"/></svg></span>Команда v2 (авто-цикл)</div>
+        <div class="nav-item" onclick="go('code-review')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-scan-search"/></svg></span>Проверка кода</div>
+        <div class="nav-item" onclick="go('lm-models')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-boxes"/></svg></span>Модели: скачать и удалить</div>
         <div id="lm-models-nav" style="padding:4px 6px 0"></div>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Текст</div>
-        <div class="nav-item" onclick="go('translator')"><span class="icon">🌐</span>Переводчик EN↔RU</div>
-        <div class="nav-item" onclick="go('sentiment')"><span class="icon">💬</span>Тональность текста</div>
-        <div class="nav-item" onclick="go('spam')"><span class="icon">🚫</span>Спам-детектор</div>
-        <div class="nav-item" onclick="go('ner')"><span class="icon">🏷️</span>Имена, места, даты (NER)</div>
-        <div class="nav-item" onclick="go('summarize')"><span class="icon">📄</span>Суммаризация</div>
-        <div class="nav-item" onclick="go('clustering-docs')"><span class="icon">🗂️</span>Группировка документов</div>
-        <div class="nav-item" onclick="go('gpt')"><span class="icon">📝</span>Генерация текста</div>
+        <div class="nav-item" onclick="go('translator')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-languages"/></svg></span>Переводчик EN↔RU</div>
+        <div class="nav-item" onclick="go('sentiment')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-message-square-heart"/></svg></span>Тональность текста</div>
+        <div class="nav-item" onclick="go('spam')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-shield-ban"/></svg></span>Спам-детектор</div>
+        <div class="nav-item" onclick="go('ner')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-tags"/></svg></span>Имена, места, даты (NER)</div>
+        <div class="nav-item" onclick="go('summarize')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-file-text"/></svg></span>Суммаризация</div>
+        <div class="nav-item" onclick="go('clustering-docs')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-folder-tree"/></svg></span>Группировка документов</div>
+        <div class="nav-item" onclick="go('gpt')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-pen-line"/></svg></span>Генерация текста</div>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Картинки</div>
-        <div class="nav-item" onclick="go('draw')"><span class="icon">🖼</span>Нарисовать по описанию</div>
-        <div class="nav-item" onclick="go('sketch')"><span class="icon">🖌️</span>Угадай рисунок</div>
-        <div class="nav-item" onclick="go('mnist')"><span class="icon">✏️</span>Распознавание цифр</div>
-        <div class="nav-item" onclick="go('gan')"><span class="icon">🎨</span>Цифры (GAN)</div>
+        <div class="nav-item" onclick="go('draw')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-image"/></svg></span>Нарисовать по описанию</div>
+        <div class="nav-item" onclick="go('sketch')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-shapes"/></svg></span>Угадай рисунок</div>
+        <div class="nav-item" onclick="go('mnist')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-pencil"/></svg></span>Распознавание цифр</div>
+        <div class="nav-item" onclick="go('gan')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-sparkles"/></svg></span>Цифры (GAN)</div>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Данные и прогнозы</div>
-        <div class="nav-item" onclick="go('price')"><span class="icon">🏢</span>Цена жилья</div>
-        <div class="nav-item" onclick="go('temperature')"><span class="icon">🌡️</span>Температура</div>
-        <div class="nav-item" onclick="go('timeseries')"><span class="icon">📈</span>Прогноз продаж</div>
-        <div class="nav-item" onclick="go('clustering')"><span class="icon">👥</span>Сегментация клиентов</div>
-        <div class="nav-item" onclick="go('recommender')"><span class="icon">🎬</span>Рекомендации фильмов</div>
-        <div class="nav-item" onclick="go('anomaly')"><span class="icon">💳</span>Аномалии транзакций</div>
-        <div class="nav-item" onclick="go('defect')"><span class="icon">🏭</span>Контроль качества</div>
+        <div class="nav-item" onclick="go('price')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-building-2"/></svg></span>Цена жилья</div>
+        <div class="nav-item" onclick="go('temperature')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-thermometer-sun"/></svg></span>Температура</div>
+        <div class="nav-item" onclick="go('timeseries')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-chart-line"/></svg></span>Прогноз продаж</div>
+        <div class="nav-item" onclick="go('clustering')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-users"/></svg></span>Сегментация клиентов</div>
+        <div class="nav-item" onclick="go('recommender')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-clapperboard"/></svg></span>Рекомендации фильмов</div>
+        <div class="nav-item" onclick="go('anomaly')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-credit-card"/></svg></span>Аномалии транзакций</div>
+        <div class="nav-item" onclick="go('defect')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-factory"/></svg></span>Контроль качества</div>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Система</div>
-        <div class="nav-item" onclick="go('settings')"><span class="icon">⚙️</span>Настройки и темы</div>
-        <div class="nav-item" onclick="go('logs')"><span class="icon">📋</span>Логи сервера</div>
+        <div class="nav-item" onclick="go('settings')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-settings-2"/></svg></span>Настройки и темы</div>
+        <div class="nav-item" onclick="go('logs')"><span class="icon"><svg class="ic"><use href="/static/icons.svg#i-scroll-text"/></svg></span>Логи сервера</div>
       </div>
 
       <div class="sidebar-footer" id="device-info">Устройство: …</div>
@@ -414,7 +464,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
     <!-- ─── MAIN ─── -->
     <div id="main">
       <div id="topbar">
-        <button id="sb-toggle" onclick="toggleSidebar()" title="Свернуть/развернуть меню">☰</button>
+        <button id="sb-toggle" onclick="toggleSidebar()" title="Свернуть/развернуть меню"><svg class="ic"><use href="/static/icons.svg#i-menu"/></svg></button>
         <span id="page-title">Главная</span>
         <span id="badge-device" class="badge">CPU</span>
         <span id="badge-lm" class="badge red">LM Studio: офлайн</span>
@@ -429,12 +479,12 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <p>Слева все разделы, <kbd>Ctrl</kbd>+<kbd>K</kbd> — быстрый поиск. Тема и цвета — в «Настройках».</p></div>
         </div>
         <div class="quick">
-          <div class="quick-tile" onclick="go('chat')"><div class="q-ico">🤖</div><div class="q-name">Умный чат</div><div class="q-desc">Вопросы, код, фото</div></div>
-          <div class="quick-tile" onclick="go('homework')"><div class="q-ico">📚</div><div class="q-name">Решить тест</div><div class="q-desc">Скрин или текст задания</div></div>
-          <div class="quick-tile" onclick="go('draw')"><div class="q-ico">🖼</div><div class="q-name">Нарисовать</div><div class="q-desc">Картинка по описанию</div></div>
-          <div class="quick-tile" onclick="go('translator')"><div class="q-ico">🌐</div><div class="q-name">Перевести</div><div class="q-desc">Английский ↔ русский</div></div>
-          <div class="quick-tile" onclick="go('sketch')"><div class="q-ico">🖌️</div><div class="q-name">Угадай рисунок</div><div class="q-desc">160 видов рисунков</div></div>
-          <div class="quick-tile" onclick="go('coder-v2')"><div class="q-ico">👾</div><div class="q-name">Команда кодеров</div><div class="q-desc">Пишет и проверяет код</div></div>
+          <div class="quick-tile" onclick="go('chat')"><div class="q-ico"><svg class="ic"><use href="/static/icons.svg#i-bot"/></svg></div><div class="q-name">Умный чат</div><div class="q-desc">Вопросы, код, фото</div></div>
+          <div class="quick-tile" onclick="go('homework')"><div class="q-ico"><svg class="ic"><use href="/static/icons.svg#i-graduation-cap"/></svg></div><div class="q-name">Решить тест</div><div class="q-desc">Скрин или текст задания</div></div>
+          <div class="quick-tile" onclick="go('draw')"><div class="q-ico"><svg class="ic"><use href="/static/icons.svg#i-image"/></svg></div><div class="q-name">Нарисовать</div><div class="q-desc">Картинка по описанию</div></div>
+          <div class="quick-tile" onclick="go('translator')"><div class="q-ico"><svg class="ic"><use href="/static/icons.svg#i-languages"/></svg></div><div class="q-name">Перевести</div><div class="q-desc">Английский ↔ русский</div></div>
+          <div class="quick-tile" onclick="go('sketch')"><div class="q-ico"><svg class="ic"><use href="/static/icons.svg#i-shapes"/></svg></div><div class="q-name">Угадай рисунок</div><div class="q-desc">160 видов рисунков</div></div>
+          <div class="quick-tile" onclick="go('coder-v2')"><div class="q-ico"><svg class="ic"><use href="/static/icons.svg#i-repeat-2"/></svg></div><div class="q-name">Команда кодеров</div><div class="q-desc">Пишет и проверяет код</div></div>
         </div>
         <div class="stat-row">
           <div class="stat"><div class="stat-num" id="stat-models">0</div><div class="stat-label">Моделей доступно</div></div>
@@ -447,15 +497,15 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <!-- SETTINGS -->
       <div id="sec-settings" class="section">
         <div class="panel" style="margin-bottom:14px">
-          <div class="panel-title">🎨 Тема</div>
+          <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-palette"/></svg> Тема</div>
           <div class="theme-grid" id="theme-grid"></div>
         </div>
         <div class="panel" style="margin-bottom:14px">
-          <div class="panel-title">🌈 Цвет акцента</div>
+          <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-circle-dot"/></svg> Цвет акцента</div>
           <div class="swatches" id="accent-swatches"></div>
         </div>
         <div class="panel">
-          <div class="panel-title">🧭 Интерфейс</div>
+          <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-layout-panel-left"/></svg> Интерфейс</div>
           <div class="set-row">
             <div><div class="s-title">Меню слева</div><div class="s-desc">Компактное — только значки, больше места под работу. Кнопка ☰ сверху делает то же.</div></div>
             <div class="seg" id="seg-sidebar"><button data-v="">Полное</button><button data-v="mini">Компактное</button></div>
@@ -475,7 +525,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-math" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🔢 Математический решатель</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-calculator"/></svg> Математический решатель</div>
             <div class="form-group">
               <label>Выражение</label>
               <input type="text" id="math-input" placeholder="123 * 456 + 789 / 3" onkeydown="if(event.key==='Enter')solveMath()">
@@ -504,7 +554,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-price" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🏠 Параметры квартиры</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-building-2"/></svg> Параметры квартиры</div>
             <div class="form-group"><label>Площадь: <b id="area-val">60</b> м²</label>
               <input type="range" id="area" min="25" max="150" value="60" oninput="document.getElementById('area-val').textContent=this.value"></div>
             <div class="form-group"><label>Комнат: <b id="rooms-val">2</b></label>
@@ -534,7 +584,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-sentiment" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">💬 Анализ тональности</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-message-square-heart"/></svg> Анализ тональности</div>
             <div class="form-group"><label>Отзыв на русском</label>
               <textarea id="sent-input" rows="6" placeholder="Например: пришло быстро, но размер маломерит"></textarea></div>
             <button class="btn btn-primary" style="width:100%" onclick="analyzeSentiment()">Анализировать</button>
@@ -547,7 +597,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
           </div></div>
           <div class="tool-output"><div class="panel">
             <div class="panel-title">Результат</div>
-            <div id="sent-emoji" style="font-size:60px;text-align:center;padding:14px 0">😐</div>
+            <div id="sent-emoji" class="big-ic"><svg class="ic"><use href="/static/icons.svg#i-meh"/></svg></div>
             <div id="sent-label" style="text-align:center;font-size:17px;font-weight:600;margin-bottom:14px;color:var(--muted)">Нейтральный</div>
             <div id="sent-bars"></div>
           </div></div>
@@ -558,14 +608,14 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-timeseries" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">📈 Прогноз временного ряда</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-chart-line"/></svg> Прогноз временного ряда</div>
             <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm ts-mode-btn active" onclick="setTSMode('sales',this)">📦 Продажи</button>
-              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('server',this)">🖥️ Нагрузка CPU</button>
-              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('traffic',this)">🚗 Трафик</button>
-              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('stocks',this)">📉 Акции</button>
-              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('energy',this)">⚡ Энергопотребление</button>
-              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('calls',this)">📞 Звонки</button>
+              <button class="btn btn-outline btn-sm ts-mode-btn active" onclick="setTSMode('sales',this)">Продажи</button>
+              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('server',this)">Нагрузка CPU</button>
+              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('traffic',this)">Трафик</button>
+              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('stocks',this)">Акции</button>
+              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('energy',this)">Энергопотребление</button>
+              <button class="btn btn-outline btn-sm ts-mode-btn" onclick="setTSMode('calls',this)">Звонки</button>
             </div>
             <div id="ts-mode-desc" style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5"></div>
             <div class="form-group">
@@ -591,7 +641,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-clustering" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">👥 Сегментация клиентов по поведению</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-users"/></svg> Сегментация клиентов по поведению</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
               Autoencoder + K-Means без учителя. Находит к какому из 4 сегментов относится клиент: <b>VIP</b>, <b>Активные</b>, <b>Молодые</b>, <b>Пассивные</b>. Используется в маркетинге для персонализации предложений.</div>
             <div class="form-group"><label>Возраст: <b id="cl-age-v">35</b> лет</label>
@@ -609,19 +659,19 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="clusterCustomer()">Определить сегмент</button>
             <label style="margin-bottom:6px">Шаблоны клиентов:</label>
             <div class="btn-row" style="flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(42,8,15000,120,10,5)">👑 VIP</button>
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(32,25,3000,75,7,20)">⚡ Активный</button>
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(23,3,1500,5,20,40)">🧑 Молодой</button>
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(50,2,2000,4,90,2)">😴 Пассивный</button>
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(38,15,8000,90,5,15)">💎 Лояльный</button>
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(28,6,2500,20,35,8)">🔄 Редкий</button>
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(45,1,12000,12,60,1)">🏆 Разовый VIP</button>
-              <button class="btn btn-outline btn-sm" onclick="setCLEx(19,40,800,30,3,50)">🔥 Студент</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(42,8,15000,120,10,5)">VIP</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(32,25,3000,75,7,20)">Активный</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(23,3,1500,5,20,40)">Молодой</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(50,2,2000,4,90,2)">Пассивный</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(38,15,8000,90,5,15)">Лояльный</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(28,6,2500,20,35,8)">Редкий</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(45,1,12000,12,60,1)">Разовый VIP</button>
+              <button class="btn btn-outline btn-sm" onclick="setCLEx(19,40,800,30,3,50)">Студент</button>
             </div>
           </div></div>
           <div class="tool-output"><div class="panel">
             <div class="panel-title">Результат сегментации</div>
-            <div id="cl-emoji" style="font-size:60px;text-align:center;padding:14px 0">👤</div>
+            <div id="cl-emoji" class="big-ic"><svg class="ic"><use href="/static/icons.svg#i-user"/></svg></div>
             <div id="cl-label" style="text-align:center;font-size:22px;font-weight:700;margin-bottom:8px;color:var(--accent)">—</div>
             <div id="cl-rec" style="text-align:center;font-size:13px;color:var(--muted);padding:0 10px;line-height:1.5"></div>
           </div></div>
@@ -632,7 +682,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-clustering-docs" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">📄 Группировка документов по тематике</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-folder-tree"/></svg> Группировка документов по тематике</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
               TF-IDF + K-Means автоматически группирует тексты по смысловой близости. Каждый документ — отдельная строка. Находит общие темы без меток. Применяется в архивах, поиске, новостных агрегаторах.</div>
             <div class="form-group"><label>Документы (по одному на строку)</label>
@@ -642,10 +692,10 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="clusterDocuments()">Сгруппировать</button>
             <label style="margin-bottom:6px">Шаблоны:</label>
             <div class="btn-row" style="flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="setDocEx('news')">📰 Новости</button>
-              <button class="btn btn-outline btn-sm" onclick="setDocEx('reviews')">⭐ Отзывы</button>
-              <button class="btn btn-outline btn-sm" onclick="setDocEx('science')">🔬 Наука</button>
-              <button class="btn btn-outline btn-sm" onclick="setDocEx('support')">🛠️ Обращения</button>
+              <button class="btn btn-outline btn-sm" onclick="setDocEx('news')">Новости</button>
+              <button class="btn btn-outline btn-sm" onclick="setDocEx('reviews')">Отзывы</button>
+              <button class="btn btn-outline btn-sm" onclick="setDocEx('science')">Наука</button>
+              <button class="btn btn-outline btn-sm" onclick="setDocEx('support')">Обращения</button>
             </div>
           </div></div>
           <div class="tool-output"><div class="panel">
@@ -661,18 +711,18 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-recommender" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🎬 Рекомендательная система</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-clapperboard"/></svg> Рекомендательная система</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
               Neural Collaborative Filtering: 115 фильмов × 6 жанров, 500 пользователей. Выбери фильмы которые нравятся — система найдёт похожие по эмбеддингам.</div>
             <div style="margin-bottom:10px">
               <label style="margin-bottom:6px">Быстрый выбор по вкусу:</label>
               <div class="btn-row" style="flex-wrap:wrap">
-                <button class="btn btn-outline btn-sm" onclick="recQuick('action')">💥 Экшен</button>
-                <button class="btn btn-outline btn-sm" onclick="recQuick('comedy')">😂 Комедия</button>
-                <button class="btn btn-outline btn-sm" onclick="recQuick('drama')">🎭 Драма</button>
-                <button class="btn btn-outline btn-sm" onclick="recQuick('scifi')">🚀 Sci-Fi</button>
-                <button class="btn btn-outline btn-sm" onclick="recQuick('romance')">💕 Романтика</button>
-                <button class="btn btn-outline btn-sm" onclick="recQuick('thriller')">🔪 Триллер</button>
+                <button class="btn btn-outline btn-sm" onclick="recQuick('action')">Экшен</button>
+                <button class="btn btn-outline btn-sm" onclick="recQuick('comedy')">Комедия</button>
+                <button class="btn btn-outline btn-sm" onclick="recQuick('drama')">Драма</button>
+                <button class="btn btn-outline btn-sm" onclick="recQuick('scifi')">Sci-Fi</button>
+                <button class="btn btn-outline btn-sm" onclick="recQuick('romance')">Романтика</button>
+                <button class="btn btn-outline btn-sm" onclick="recQuick('thriller')">Триллер</button>
               </div>
             </div>
             <div class="form-group"><label>Выбранные фильмы (<b id="rec-count">0</b>):</label>
@@ -700,7 +750,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-anomaly" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">💳 Обнаружение мошенничества</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-credit-card"/></svg> Обнаружение мошенничества</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
               Autoencoder обучен только на нормальных транзакциях. Мошеннические транзакции восстанавливаются с большой ошибкой → детектируются как аномалия</div>
             <div class="form-group"><label>Сумма: <b id="an-amt-v">500</b> руб</label>
@@ -721,15 +771,15 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="checkAnomaly()">Проверить транзакцию</button>
             <label style="margin-bottom:6px">Шаблоны:</label>
             <div class="btn-row" style="flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="setANEx('normal')">✅ Обычная</button>
-              <button class="btn btn-outline btn-sm" onclick="setANEx('night')">🌙 Ночная крупная</button>
-              <button class="btn btn-outline btn-sm" onclick="setANEx('abroad')">✈️ Заграничная</button>
-              <button class="btn btn-outline btn-sm" onclick="setANEx('fraud')">🚨 Подозрительная</button>
+              <button class="btn btn-outline btn-sm" onclick="setANEx('normal')">Обычная</button>
+              <button class="btn btn-outline btn-sm" onclick="setANEx('night')">Ночная крупная</button>
+              <button class="btn btn-outline btn-sm" onclick="setANEx('abroad')">Заграничная</button>
+              <button class="btn btn-outline btn-sm" onclick="setANEx('fraud')">Подозрительная</button>
             </div>
           </div></div>
           <div class="tool-output"><div class="panel">
             <div class="panel-title">Результат проверки</div>
-            <div id="an-emoji" style="font-size:60px;text-align:center;padding:14px 0">🔍</div>
+            <div id="an-emoji" class="big-ic"><svg class="ic"><use href="/static/icons.svg#i-scan-search"/></svg></div>
             <div id="an-label" style="text-align:center;font-size:20px;font-weight:700;margin-bottom:14px">—</div>
             <div id="an-bar-wrap" style="display:none">
               <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
@@ -746,7 +796,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-defect" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🏭 Контроль качества деталей</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-factory"/></svg> Контроль качества деталей</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
               DefectNet классифицирует деталь как норму или брак по 8 измерениям: толщина, масса, твёрдость, шероховатость, размеры, температура и время обработки</div>
             <div class="form-group"><label>Толщина: <b id="df-th-v">10.00</b> мм (норма: 9.85–10.15)</label>
@@ -762,15 +812,15 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="checkDefect()">Проверить деталь</button>
             <label style="margin-bottom:6px">Шаблоны:</label>
             <div class="btn-row" style="flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="setDFEx('ok')">✅ Норма</button>
-              <button class="btn btn-outline btn-sm" onclick="setDFEx('crack')">💔 Трещина (толщина)</button>
-              <button class="btn btn-outline btn-sm" onclick="setDFEx('void')">⚖️ Пустота (масса)</button>
-              <button class="btn btn-outline btn-sm" onclick="setDFEx('thermal')">🔥 Термобрак</button>
+              <button class="btn btn-outline btn-sm" onclick="setDFEx('ok')">Норма</button>
+              <button class="btn btn-outline btn-sm" onclick="setDFEx('crack')">Трещина (толщина)</button>
+              <button class="btn btn-outline btn-sm" onclick="setDFEx('void')">Пустота (масса)</button>
+              <button class="btn btn-outline btn-sm" onclick="setDFEx('thermal')">Термобрак</button>
             </div>
           </div></div>
           <div class="tool-output"><div class="panel">
             <div class="panel-title">Результат контроля</div>
-            <div id="df-emoji" style="font-size:60px;text-align:center;padding:14px 0">🔧</div>
+            <div id="df-emoji" class="big-ic"><svg class="ic"><use href="/static/icons.svg#i-wrench"/></svg></div>
             <div id="df-label" style="text-align:center;font-size:22px;font-weight:700;margin-bottom:14px">—</div>
             <div id="df-bars"></div>
           </div></div>
@@ -781,7 +831,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-temperature" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🌡️ Параметры погоды (сегодня)</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-thermometer-sun"/></svg> Параметры погоды (сегодня)</div>
             <div class="form-group"><label>Температура сегодня: <b id="tt-val">10</b> °C</label>
               <input type="range" id="tt" min="-30" max="40" value="10" oninput="document.getElementById('tt-val').textContent=this.value"></div>
             <div class="form-group"><label>Давление: <b id="tp-val">760</b> мм рт.ст.</label>
@@ -821,7 +871,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-spam" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🚫 Анализ текста на спам</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-shield-ban"/></svg> Анализ текста на спам</div>
             <div class="form-group"><label>Текст письма или SMS (русский или английский)</label>
               <textarea id="spam-input" rows="7" placeholder="Введите текст письма или сообщения…"></textarea></div>
             <button class="btn btn-primary" style="width:100%" onclick="analyzeSpam()">Проверить</button>
@@ -837,7 +887,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
           </div></div>
           <div class="tool-output"><div class="panel">
             <div class="panel-title">Результат</div>
-            <div id="spam-emoji" style="font-size:60px;text-align:center;padding:14px 0">📬</div>
+            <div id="spam-emoji" class="big-ic"><svg class="ic"><use href="/static/icons.svg#i-mail"/></svg></div>
             <div id="spam-label" style="text-align:center;font-size:20px;font-weight:700;margin-bottom:14px">—</div>
             <div id="spam-bars"></div>
           </div></div>
@@ -848,7 +898,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-summarize" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">📄 Экстрактивная суммаризация</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-file-text"/></svg> Экстрактивная суммаризация</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
               Алгоритм TF-IDF выбирает самые информативные предложения из текста. Не генерирует — только извлекает ключевые фразы. Работает без нейросети.</div>
             <div class="form-group"><label>Текст для суммаризации</label>
@@ -858,10 +908,10 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <button class="btn btn-primary" style="width:100%" onclick="summarizeText()">Сжать текст</button>
             <div style="margin-top:10px"><label style="margin-bottom:6px">Примеры:</label>
               <div class="btn-row" style="flex-wrap:wrap">
-                <button class="btn btn-outline btn-sm" onclick="setSumEx('tech')">💻 Технологии</button>
-                <button class="btn btn-outline btn-sm" onclick="setSumEx('science')">🔬 Наука</button>
-                <button class="btn btn-outline btn-sm" onclick="setSumEx('business')">💼 Бизнес</button>
-                <button class="btn btn-outline btn-sm" onclick="setSumEx('history')">📜 История</button>
+                <button class="btn btn-outline btn-sm" onclick="setSumEx('tech')">Технологии</button>
+                <button class="btn btn-outline btn-sm" onclick="setSumEx('science')">Наука</button>
+                <button class="btn btn-outline btn-sm" onclick="setSumEx('business')">Бизнес</button>
+                <button class="btn btn-outline btn-sm" onclick="setSumEx('history')">История</button>
               </div></div>
           </div></div>
           <div class="tool-output"><div class="panel">
@@ -878,7 +928,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-ner" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🏷️ Извлечение именованных сущностей (NER)</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-tags"/></svg> Извлечение именованных сущностей (NER)</div>
             <div style="font-size:12px;color:var(--muted);background:var(--surf2);border-radius:6px;padding:8px 10px;margin-bottom:12px;line-height:1.5">
               Нейросеть размечает каждое слово: <b>PER</b> — люди, <b>ORG</b> — организации, <b>LOC</b> — места, <b>DATE</b> — даты. Русский и английский. Обучена на WikiANN (40 тыс. предложений) — узнаёт и незнакомые имена по написанию.</div>
             <div class="form-group"><label>Текст на русском или английском</label>
@@ -887,18 +937,18 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <div style="margin-top:10px"><label style="margin-bottom:6px">Примеры:</label>
               <div style="font-size:11px;color:var(--faint);margin-bottom:4px">English:</div>
             <div class="btn-row" style="flex-wrap:wrap;margin-bottom:8px">
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('biz')">🏢 Business</button>
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('bio')">👤 Biography</button>
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('news')">📰 News</button>
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('science')">🔬 Science</button>
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('geo')">🌍 Geo</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('biz')">Business</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('bio')">Biography</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('news')">News</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('science')">Science</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('geo')">Geo</button>
               </div>
             <div style="font-size:11px;color:var(--faint);margin-bottom:4px">Русский:</div>
             <div class="btn-row" style="flex-wrap:wrap">
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_biz')">🏢 Бизнес</button>
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_bio')">👤 Биография</button>
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_news')">📰 Новость</button>
-                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_geo')">🌍 География</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_biz')">Бизнес</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_bio')">Биография</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_news')">Новость</button>
+                <button class="btn btn-outline btn-sm" onclick="setNEREx('ru_geo')">География</button>
               </div></div>
           </div></div>
           <div class="tool-output"><div class="panel">
@@ -915,7 +965,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-gan" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🎨 Генерация цифр (GAN)</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-sparkles"/></svg> Генерация цифр (GAN)</div>
             <div class="form-group"><label>Цифра</label>
               <div class="digit-sel" id="gan-digit-sel"></div></div>
             <div class="form-group"><label>Количество: <b id="gan-count-val">4</b></label>
@@ -934,7 +984,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-mnist" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">✏️ Нарисуйте цифру</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-pencil"/></svg> Нарисуйте цифру</div>
             <canvas id="mnist-canvas" width="280" height="280"></canvas>
             <div class="btn-row" style="margin-top:10px">
               <button class="btn btn-primary" onclick="mnistPredict()">Распознать</button>
@@ -954,7 +1004,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-sketch" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🖌️ Нарисуй — угадаю</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-shapes"/></svg> Нарисуй — угадаю</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Цифры, буквы, фигуры, предметы (кошка, дом, машина…) и математические знаки — 160 классов. Угадывает, как только отпускаешь мышь.</div>
             <canvas id="sketch-canvas" width="400" height="400" style="display:block;width:100%;max-width:400px;aspect-ratio:1;border:2px solid var(--border);border-radius:8px;cursor:crosshair;background:#000;touch-action:none"></canvas>
             <div class="form-group" style="margin-top:10px"><label>Толщина кисти: <span id="sketch-pen-val">24</span></label>
@@ -972,7 +1022,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
       <!-- TRANSLATOR -->
       <div id="sec-translator" class="section"><div class="panel">
-        <div class="panel-title">🌐 Переводчик EN ↔ RU</div>
+        <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-languages"/></svg> Переводчик EN ↔ RU</div>
         <div class="trans-wrap">
           <div class="trans-panel">
             <label id="src-lang-label" style="margin-bottom:5px">Английский (источник)</label>
@@ -1010,7 +1060,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-gpt" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">📝 Генерация текста (MiniGPT)</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-pen-line"/></svg> Генерация текста (MiniGPT)</div>
             <div class="form-group"><label>Язык генерации</label>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <button class="btn btn-outline btn-sm gpt-lang-btn active" data-lang="RU" onclick="setGptLang('RU',this)">🇷🇺 Русский</button>
@@ -1039,39 +1089,39 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
       <!-- CHAT -->
       <div id="sec-chat" class="section"><div class="panel">
-        <div class="panel-title">🤖 Умный чат (LM Studio)
+        <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-bot"/></svg> Умный чат (LM Studio)
           <span id="chat-model-badge" class="model-badge" style="margin-left:8px">—</span>
           <button class="btn btn-danger btn-sm" id="chat-stop-btn" style="margin-left:auto;display:none" onclick="stopChat()">⏹ Стоп</button>
           <button class="btn btn-outline btn-sm" id="chat-unload-btn" style="margin-left:6px" title="Выгрузить модель из LM Studio" onclick="unloadLM()">⏏ Выгрузить</button>
         </div>
         <div id="chat-lm-warn" style="display:flex;align-items:center;gap:10px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;padding:12px 16px;margin-bottom:10px;color:#f85149;font-size:13px">
-          ⚠ LM Studio офлайн. Запустите LM Studio и загрузите модель.
+          LM Studio офлайн. Запустите LM Studio и загрузите модель.
         </div>
         <div id="chat-messages"></div>
         <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
           <div style="display:flex;gap:7px;margin-bottom:7px;flex-wrap:wrap">
             <select id="chat-model-sel" style="max-width:140px">
-              <option value="auto">🔀 Авто</option>
-              <option value="coder">💻 Кодер</option>
-              <option value="reasoner">🧠 Рассуждение</option>
-              <option value="writer">✍️ Писатель</option>
-              <option value="vision">👁 Зрение</option>
+              <option value="auto">Авто</option>
+              <option value="coder">Кодер</option>
+              <option value="reasoner">Рассуждение</option>
+              <option value="writer">Писатель</option>
+              <option value="vision">Зрение</option>
             </select>
             <select id="chat-lang-sel" style="max-width:130px" title="Язык ответа">
-              <option value="">🌐 Авто-язык</option>
+              <option value="">Авто-язык</option>
               <option value="ru">🇷🇺 Русский</option>
               <option value="en">🇬🇧 English</option>
               <option value="de">🇩🇪 Deutsch</option>
               <option value="zh">🇨🇳 中文</option>
             </select>
             <input type="file" id="chat-file" accept="image/*" style="display:none" onchange="handleChatImage(this)">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('chat-file').click()">📎 Фото</button>
-            <button class="btn btn-outline btn-sm" onclick="clearChat()">🗑 Очистить</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('chat-file').click()"><svg class="ic"><use href="/static/icons.svg#i-paperclip"/></svg> Фото</button>
+            <button class="btn btn-outline btn-sm" onclick="clearChat()"><svg class="ic"><use href="/static/icons.svg#i-trash-2"/></svg> Очистить</button>
           </div>
           <div class="chat-input-row">
             <textarea id="chat-input" rows="2" placeholder="Введите сообщение… (Enter = отправить)"
               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
-            <button class="btn btn-primary" id="chat-send-btn" onclick="sendChat()">➤</button>
+            <button class="btn btn-primary" id="chat-send-btn" onclick="sendChat()"><svg class="ic"><use href="/static/icons.svg#i-send"/></svg></button>
           </div>
           <div id="chat-img-preview" style="margin-top:5px"></div>
         </div>
@@ -1081,12 +1131,12 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-coder" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">👾 Команда кодеров
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-code-xml"/></svg> Команда кодеров
               <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="unloadLM(this)">⏏ Выгрузить</button>
             </div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Писатель → Ревьюер → Исправщик → Полировщик</div>
             <div id="coder-lm-warn" style="display:none;align-items:center;gap:8px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:6px;padding:8px 12px;margin-bottom:10px;color:#f85149;font-size:12px">
-              ⚠ LM Studio офлайн — запустите LM Studio и загрузите модель.
+              LM Studio офлайн — запустите LM Studio и загрузите модель.
             </div>
             <div class="form-group"><label>Задача</label>
               <textarea id="coder-task" rows="5" placeholder="Напишите задачу на Python…"></textarea></div>
@@ -1101,7 +1151,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <div class="panel"><div class="panel-title">Логи</div><div id="coder-log"></div></div>
             <div class="panel" id="coder-code-panel" style="display:none">
               <div class="panel-title" style="justify-content:space-between">Итоговый код
-                <button class="btn btn-outline btn-sm" onclick="copyCode()">📋 Копировать</button></div>
+                <button class="btn btn-outline btn-sm" onclick="copyCode()"><svg class="ic"><use href="/static/icons.svg#i-copy"/></svg> Копировать</button></div>
               <pre id="coder-code" class="code-block"></pre>
             </div>
           </div>
@@ -1112,7 +1162,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-coder-v2" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🤖 Команда кодеров v2
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-repeat-2"/></svg> Команда кодеров v2
               <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="unloadLM(this)">⏏ Выгрузить</button>
             </div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:6px">
@@ -1122,7 +1172,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
               Ревьюер и Тестировщик работают параллельно. Код переписывается до тех пор, пока оба не одобрят.
             </div>
             <div id="coder2-lm-warn" style="display:none;align-items:center;gap:8px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:6px;padding:8px 12px;margin-bottom:10px;color:#f85149;font-size:12px">
-              ⚠ LM Studio офлайн — запустите LM Studio и загрузите модель.
+              LM Studio офлайн — запустите LM Studio и загрузите модель.
             </div>
             <div class="form-group"><label>Задача</label>
               <textarea id="coder2-task" rows="5" placeholder="Опишите что нужно написать…"></textarea>
@@ -1152,7 +1202,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
               <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Управление циклом</div>
               <button class="btn btn-outline btn-sm" style="color:#f85149;border-color:#f85149;margin-bottom:8px" onclick="coderV2Stop()">⏹ Стоп — взять текущий код</button>
               <textarea id="coder2-comment" rows="2" placeholder="Комментарий кодеру (добавится к следующей итерации)…" style="font-size:12px;resize:vertical"></textarea>
-              <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="coderV2SendComment()">💬 Отправить комментарий</button>
+              <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="coderV2SendComment()"><svg class="ic"><use href="/static/icons.svg#i-send"/></svg> Отправить комментарий</button>
             </div>
           </div></div>
           <div class="tool-output" style="display:flex;flex-direction:column;gap:14px">
@@ -1168,7 +1218,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             <!-- Итоговый код -->
             <div class="panel" id="coder2-code-panel" style="display:none">
               <div class="panel-title" style="justify-content:space-between">Итоговый код
-                <button class="btn btn-outline btn-sm" onclick="copyCodeV2()">📋 Копировать</button>
+                <button class="btn btn-outline btn-sm" onclick="copyCodeV2()"><svg class="ic"><use href="/static/icons.svg#i-copy"/></svg> Копировать</button>
               </div>
               <pre id="coder2-code" class="code-block"></pre>
             </div>
@@ -1180,7 +1230,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-code-review" class="section">
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🔍 Проверка кода
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-scan-search"/></svg> Проверка кода
               <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="unloadLM(this)">⏏ Выгрузить</button>
             </div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
@@ -1208,7 +1258,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
               </div>
             </div>
             <div class="btn-row">
-              <button class="btn btn-primary" id="review-btn" onclick="runCodeReview()">🔍 Проверить</button>
+              <button class="btn btn-primary" id="review-btn" onclick="runCodeReview()"><svg class="ic"><use href="/static/icons.svg#i-scan-search"/></svg> Проверить</button>
               <button class="btn btn-outline" onclick="clearCodeReview()">Очистить</button>
             </div>
             <!-- Управление активным циклом -->
@@ -1216,7 +1266,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
               <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Управление циклом</div>
               <button class="btn btn-outline btn-sm" style="color:#f85149;border-color:#f85149;margin-bottom:8px" onclick="reviewStop()">⏹ Стоп — взять текущий код</button>
               <textarea id="review-comment" rows="2" placeholder="Комментарий кодеру (добавится к следующей итерации)…" style="font-size:12px;resize:vertical"></textarea>
-              <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="reviewSendComment()">💬 Отправить комментарий</button>
+              <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="reviewSendComment()"><svg class="ic"><use href="/static/icons.svg#i-send"/></svg> Отправить комментарий</button>
             </div>
           </div></div>
           <div class="tool-output" style="display:flex;flex-direction:column;gap:14px">
@@ -1225,7 +1275,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             </div>
             <div class="panel" id="review-code-panel" style="display:none">
               <div class="panel-title" style="justify-content:space-between">Исправленный код
-                <button class="btn btn-outline btn-sm" onclick="copyReviewCode()">📋 Копировать</button>
+                <button class="btn btn-outline btn-sm" onclick="copyReviewCode()"><svg class="ic"><use href="/static/icons.svg#i-copy"/></svg> Копировать</button>
               </div>
               <pre id="review-code-out" class="code-block"></pre>
             </div>
@@ -1239,7 +1289,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
           <!-- INPUT -->
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">📚 Решить тест (МЭШ)</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-graduation-cap"/></svg> Решить тест (МЭШ)</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
               Вставь фото задания или введи текст — получи точный ответ
             </div>
@@ -1272,13 +1322,13 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
                 ondragleave="this.style.borderColor='var(--border)'"
                 ondrop="hwDrop(event)">
                 <div id="hw-drop-text" style="color:var(--muted);font-size:13px">
-                  📷 Нажми или перетащи фото<br>
+                  Нажми или перетащи фото<br>
                   <span style="font-size:11px;color:var(--faint)">Ctrl+V для вставки из буфера</span>
                 </div>
                 <img id="hw-preview" style="display:none;max-width:100%;max-height:200px;border-radius:6px;margin-top:8px">
                 <input type="file" id="hw-file" accept="image/*" style="display:none" onchange="hwFileSelect(this)">
               </div>
-              <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="hwClearImage()">✕ Убрать фото</button>
+              <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="hwClearImage()"><svg class="ic"><use href="/static/icons.svg#i-x"/></svg> Убрать фото</button>
             </div>
 
             <!-- Текст вопроса -->
@@ -1287,7 +1337,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
             </div>
 
             <div class="btn-row">
-              <button class="btn btn-primary" id="hw-btn" onclick="hwSolve()" style="font-size:15px;padding:10px 24px">🔍 Найти ответ</button>
+              <button class="btn btn-primary" id="hw-btn" onclick="hwSolve()" style="font-size:15px;padding:10px 24px"><svg class="ic"><use href="/static/icons.svg#i-search"/></svg> Найти ответ</button>
               <button class="btn btn-outline" id="hw-stop-btn" style="display:none;color:#f85149;border-color:#f85149" onclick="hwStop()">⏹ Стоп</button>
               <button class="btn btn-outline" onclick="hwClear()">Очистить</button>
             </div>
@@ -1308,7 +1358,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
             <!-- Загрузка -->
             <div class="panel" id="hw-loading" style="display:none;text-align:center;padding:30px">
-              <div style="font-size:28px;margin-bottom:10px">🤔</div>
+              <div class="big-ic" style="padding:0 0 10px"><svg class="ic"><use href="/static/icons.svg#i-lightbulb"/></svg></div>
               <div style="color:var(--muted);font-size:13px">Думаю над ответом…</div>
             </div>
 
@@ -1328,10 +1378,10 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <div id="sec-lm-models" class="section">
         <div class="panel">
           <div class="panel-title" style="justify-content:space-between">
-            🧠 Модели для чата и кодеров
+            <svg class="ic"><use href="/static/icons.svg#i-brain-circuit"/></svg> Модели для чата и кодеров
             <div style="display:flex;align-items:center;gap:8px">
               <span id="lm-status-badge" class="chip">Проверка...</span>
-              <button class="btn btn-outline btn-sm" onclick="refreshLMModels()">↻ Обновить</button>
+              <button class="btn btn-outline btn-sm" onclick="refreshLMModels()"><svg class="ic"><use href="/static/icons.svg#i-refresh-cw"/></svg> Обновить</button>
             </div>
           </div>
           <div id="lm-server-info" style="margin-bottom:14px;font-size:13px;color:var(--muted)"></div>
@@ -1339,12 +1389,12 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
         </div>
 
         <div class="panel" style="margin-top:16px">
-          <div class="panel-title">📦 Другие скачанные модели</div>
+          <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-boxes"/></svg> Другие скачанные модели</div>
           <div id="lm-others-list" class="lm-list"></div>
         </div>
 
         <div class="panel" style="margin-top:16px">
-          <div class="panel-title">📥 Скачать другую модель</div>
+          <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-download"/></svg> Скачать другую модель</div>
           <div style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6">
             Вставь ссылку на GGUF-модель с Hugging Face или имя из каталога LM Studio (Discover).
             Квантование пишется после @, например
@@ -1353,7 +1403,7 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
           </div>
           <div class="lm-row" style="align-items:stretch">
             <input type="text" id="lm-spec-input" placeholder="https://huggingface.co/автор/модель-GGUF@Q4_K_M" style="flex:1">
-            <button class="btn btn-primary" onclick="lmDownload({spec: document.getElementById('lm-spec-input').value.trim()}, this)">📥 Скачать</button>
+            <button class="btn btn-primary" onclick="lmDownload({spec: document.getElementById('lm-spec-input').value.trim()}, this)"><svg class="ic"><use href="/static/icons.svg#i-download"/></svg> Скачать</button>
             <div class="lm-progress" style="flex-basis:100%"></div>
           </div>
         </div>
@@ -1362,23 +1412,23 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
       <!-- DRAW -->
       <div id="sec-draw" class="section">
         <div class="panel" id="draw-addon" style="margin-bottom:14px;display:none">
-          <div class="panel-title">🧩 Модуль рисования</div>
+          <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-puzzle"/></svg> Модуль рисования</div>
           <div id="draw-addon-text" style="font-size:13px;line-height:1.6"></div>
           <div class="btn-row" style="margin-top:10px">
-            <button class="btn btn-primary" id="draw-addon-install" onclick="drawAddonInstall(this)">📥 Установить модуль рисования</button>
-            <button class="btn btn-danger btn-sm" id="draw-addon-remove" onclick="drawAddonRemove(false)">🗑 Удалить модуль</button>
-            <button class="btn btn-danger btn-sm" id="draw-addon-remove-all" onclick="drawAddonRemove(true)">🗑 Удалить модуль и модель</button>
+            <button class="btn btn-primary" id="draw-addon-install" onclick="drawAddonInstall(this)"><svg class="ic"><use href="/static/icons.svg#i-download"/></svg> Установить модуль рисования</button>
+            <button class="btn btn-danger btn-sm" id="draw-addon-remove" onclick="drawAddonRemove(false)"><svg class="ic"><use href="/static/icons.svg#i-trash-2"/></svg> Удалить модуль</button>
+            <button class="btn btn-danger btn-sm" id="draw-addon-remove-all" onclick="drawAddonRemove(true)"><svg class="ic"><use href="/static/icons.svg#i-trash-2"/></svg> Удалить модуль и модель</button>
           </div>
           <div class="lm-progress" id="draw-addon-progress"></div>
         </div>
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🖼 Нарисовать по описанию</div>
+            <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-image"/></svg> Нарисовать по описанию</div>
             <div style="font-size:12px;color:var(--muted);margin-bottom:12px">SDXL-Turbo: картинка 512×512 за 1–3 секунды на видеокарте, за минуту-две на процессоре.</div>
             <div class="form-group"><label>Описание изображения (на английском)</label>
               <textarea id="draw-prompt" rows="4" placeholder="a futuristic city at night, cyberpunk style, neon lights…"></textarea></div>
             <div class="btn-row">
-              <button class="btn btn-primary" id="draw-btn" onclick="generateImage()">✨ Создать</button>
+              <button class="btn btn-primary" id="draw-btn" onclick="generateImage()"><svg class="ic"><use href="/static/icons.svg#i-wand-sparkles"/></svg> Создать</button>
               <button class="btn btn-danger" id="draw-stop-btn" onclick="stopDraw()" style="display:none">⏹ Стоп</button>
               <button class="btn btn-outline" onclick="document.getElementById('draw-result').innerHTML=''">Очистить</button>
             </div>
@@ -1394,12 +1444,12 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
       <!-- LOGS -->
       <div id="sec-logs" class="section"><div class="panel">
-        <div class="panel-title">📋 Логи
+        <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-scroll-text"/></svg> Логи
           <div style="display:flex;gap:4px;margin-left:12px">
             <button id="log-tab-server" class="btn btn-sm btn-primary" onclick="switchLogTab('server')">Сервер</button>
             <button id="log-tab-lm"     class="btn btn-sm btn-outline" onclick="switchLogTab('lm')">LM Studio</button>
           </div>
-          <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="clearLogs()">🗑 Очистить</button>
+          <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="clearLogs()"><svg class="ic"><use href="/static/icons.svg#i-trash-2"/></svg> Очистить</button>
           <button class="btn btn-outline btn-sm" onclick="loadLogs()">↻ Обновить</button>
         </div>
         <div id="logs-output"    style="height:500px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;font-family:monospace;line-height:1.7"></div>
@@ -1416,11 +1466,11 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 <!-- SETUP WIZARD MODAL -->
 <div id="setup-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
   <div style="background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:640px;width:92%;max-height:88vh;overflow:auto;box-shadow:0 24px 64px rgba(0,0,0,.5)">
-    <div style="font-size:20px;font-weight:700;margin-bottom:6px">🚀 Модели для чата и кодеров</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">Модели для чата и кодеров</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Чат, «Решить тест» и команды кодеров работают через LM Studio. Недостающие модели можно скачать прямо отсюда, остальные разделы работают и без них.</div>
 
     <div id="setup-lm-status" style="font-size:12px;margin-bottom:16px;padding:8px 12px;border-radius:6px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#f85149;display:none">
-      ⚠ LM Studio не запущен. Открой LM Studio и включи Local Server (Developer → Start Server).
+      LM Studio не запущен. Открой LM Studio и включи Local Server (Developer → Start Server).
     </div>
 
     <div id="setup-models-list" class="lm-list" style="margin-bottom:18px"></div>
@@ -1431,8 +1481,8 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
     <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
       <button class="btn btn-outline" onclick="closeSetupWizard()">Пропустить</button>
-      <button class="btn btn-outline" onclick="checkSetupStatus()">🔄 Проверить снова</button>
-      <button class="btn btn-primary" id="setup-dl-all" onclick="lmDownloadMissing(this)">📥 Скачать всё недостающее</button>
+      <button class="btn btn-outline" onclick="checkSetupStatus()"><svg class="ic"><use href="/static/icons.svg#i-refresh-cw"/></svg> Проверить снова</button>
+      <button class="btn btn-primary" id="setup-dl-all" onclick="lmDownloadMissing(this)"><svg class="ic"><use href="/static/icons.svg#i-download"/></svg> Скачать всё недостающее</button>
     </div>
   </div>
 </div>
@@ -1501,29 +1551,30 @@ function go(page) {
 // ═══════════════════════════════════════════════════════════
 // СТАТУС
 // ═══════════════════════════════════════════════════════════
+function ic(n) { return `<svg class="ic"><use href="/static/icons.svg#i-${n}"/></svg>`; }
 const MODEL_GROUPS = ['Текст', 'Картинки', 'Данные и прогнозы'];
 const MODEL_META = {
-  translator:  {icon:'🌐', name:'Переводчик EN↔RU',     desc:'Трансформер, 800 тыс. пар фраз',   sec:'translator',  group:'Текст'},
-  sentiment:   {icon:'💬', name:'Тональность',          desc:'BiLSTM, отзывы RuReviews',          sec:'sentiment',   group:'Текст'},
-  spam:        {icon:'🚫', name:'Спам-детектор',        desc:'BiLSTM, SMS на русском и английском', sec:'spam',      group:'Текст'},
-  ner:         {icon:'🏷️', name:'Имена, места, даты',    desc:'BiLSTM + символьная CNN, WikiANN',  sec:'ner',         group:'Текст'},
-  gpt:         {icon:'📝', name:'Генерация текста',     desc:'Мини-GPT с BPE',                    sec:'gpt',         group:'Текст'},
-  sketch:      {icon:'🖌️', name:'Угадай рисунок',        desc:'CNN, 160 классов',                  sec:'sketch',      group:'Картинки'},
-  mnist:       {icon:'✏️', name:'Распознавание цифр',   desc:'ResNet, MNIST',                     sec:'mnist',       group:'Картинки'},
-  gan:         {icon:'🎨', name:'Цифры (GAN)',          desc:'Условная DCGAN',                    sec:'gan',         group:'Картинки'},
-  price:       {icon:'🏢', name:'Цена жилья',           desc:'MLP-регрессия',                     sec:'price',       group:'Данные и прогнозы'},
-  temperature: {icon:'🌡️', name:'Температура',          desc:'MLP-регрессия по погоде',           sec:'temperature', group:'Данные и прогнозы'},
-  timeseries:  {icon:'📈', name:'Прогноз продаж',       desc:'LSTM + внимание',                   sec:'timeseries',  group:'Данные и прогнозы'},
-  clustering:  {icon:'👥', name:'Сегментация клиентов', desc:'Автоэнкодер + K-Means',             sec:'clustering',  group:'Данные и прогнозы'},
-  recommender: {icon:'🎬', name:'Рекомендации фильмов', desc:'Нейронная коллаборативная фильтрация', sec:'recommender', group:'Данные и прогнозы'},
-  anomaly:     {icon:'💳', name:'Аномалии транзакций',  desc:'Автоэнкодер',                       sec:'anomaly',     group:'Данные и прогнозы'},
-  defect:      {icon:'🏭', name:'Контроль качества',    desc:'MLP-классификатор',                 sec:'defect',      group:'Данные и прогнозы'},
+  translator:  {icon:'languages', name:'Переводчик EN↔RU',     desc:'Трансформер, 800 тыс. пар фраз',   sec:'translator',  group:'Текст'},
+  sentiment:   {icon:'message-square-heart', name:'Тональность',          desc:'BiLSTM, отзывы RuReviews',          sec:'sentiment',   group:'Текст'},
+  spam:        {icon:'shield-ban', name:'Спам-детектор',        desc:'BiLSTM, SMS на русском и английском', sec:'spam',      group:'Текст'},
+  ner:         {icon:'tags', name:'Имена, места, даты',    desc:'BiLSTM + символьная CNN, WikiANN',  sec:'ner',         group:'Текст'},
+  gpt:         {icon:'pen-line', name:'Генерация текста',     desc:'Мини-GPT с BPE',                    sec:'gpt',         group:'Текст'},
+  sketch:      {icon:'shapes', name:'Угадай рисунок',        desc:'CNN, 160 классов',                  sec:'sketch',      group:'Картинки'},
+  mnist:       {icon:'pencil', name:'Распознавание цифр',   desc:'ResNet, MNIST',                     sec:'mnist',       group:'Картинки'},
+  gan:         {icon:'sparkles', name:'Цифры (GAN)',          desc:'Условная DCGAN',                    sec:'gan',         group:'Картинки'},
+  price:       {icon:'building-2', name:'Цена жилья',           desc:'MLP-регрессия',                     sec:'price',       group:'Данные и прогнозы'},
+  temperature: {icon:'thermometer-sun', name:'Температура',          desc:'MLP-регрессия по погоде',           sec:'temperature', group:'Данные и прогнозы'},
+  timeseries:  {icon:'chart-line', name:'Прогноз продаж',       desc:'LSTM + внимание',                   sec:'timeseries',  group:'Данные и прогнозы'},
+  clustering:  {icon:'users', name:'Сегментация клиентов', desc:'Автоэнкодер + K-Means',             sec:'clustering',  group:'Данные и прогнозы'},
+  recommender: {icon:'clapperboard', name:'Рекомендации фильмов', desc:'Нейронная коллаборативная фильтрация', sec:'recommender', group:'Данные и прогнозы'},
+  anomaly:     {icon:'credit-card', name:'Аномалии транзакций',  desc:'Автоэнкодер',                       sec:'anomaly',     group:'Данные и прогнозы'},
+  defect:      {icon:'factory', name:'Контроль качества',    desc:'MLP-классификатор',                 sec:'defect',      group:'Данные и прогнозы'},
 };
 
 async function loadStatus() {
   try {
     const s = await fetch('/api/status').then(r => r.json());
-    const dev = s.device.includes('cuda') ? 'GPU 🔥' : 'CPU';
+    const dev = s.device.includes('cuda') ? 'GPU' : 'CPU';
     document.getElementById('badge-device').textContent = dev;
     document.getElementById('stat-device').textContent = dev;
     document.getElementById('device-info').textContent = 'Устройство: ' + s.device;
@@ -1548,7 +1599,7 @@ async function loadStatus() {
           const mdls = lmMdls.models || [];
           lmNav.innerHTML = mdls.length
             ? `<div style="font-size:10px;color:var(--faint);padding:4px 10px 2px;text-transform:uppercase;letter-spacing:.5px">LM Studio</div>`+
-              mdls.slice(0,5).map(m=>`<div style="padding:3px 10px 3px 26px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(m)}">🟢 ${esc(m)}</div>`).join('')
+              mdls.slice(0,5).map(m=>`<div class="lm-live" title="${esc(m)}">${esc(m)}</div>`).join('')
             : `<div style="padding:3px 10px;font-size:11px;color:var(--faint)">Нет загруженных моделей</div>`;
         } catch(e) { lmNav.innerHTML=''; }
       } else {
@@ -1566,7 +1617,7 @@ async function loadStatus() {
       grid.insertAdjacentHTML('beforeend',
         `<div style="grid-column:1/-1;background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);
           border-radius:8px;padding:12px 16px;color:#f85149;font-size:13px;display:flex;align-items:center;gap:10px">
-          ⚠ <span>PyTorch не установлен — локальные нейросети недоступны. LM Studio функции работают в полном объёме.</span>
+          ${ic('triangle-alert')} <span>PyTorch не установлен — локальные нейросети недоступны. LM Studio функции работают в полном объёме.</span>
         </div>`);
     }
     for (const group of MODEL_GROUPS) {
@@ -1581,7 +1632,7 @@ async function loadStatus() {
           ? `<span class="status-pill" style="background:rgba(139,148,158,.15);color:var(--muted)">Нет PyTorch</span>`
           : `<span class="status-pill ${fileOk?'pill-ok':'pill-miss'}">${fileOk?'✓ Готова':'✗ Нет файла'}</span>`;
         box.insertAdjacentHTML('beforeend', `<div class="card" onclick="go('${meta.sec}')" style="cursor:pointer"><div class="card-header">
-          <span class="card-icon">${meta.icon}</span>
+          <span class="card-icon">${ic(meta.icon)}</span>
           <div style="min-width:0"><div class="card-title">${meta.name}</div><div class="card-desc">${meta.desc}</div>
           <div style="margin-top:8px">${pill}</div></div>
         </div></div>`);
@@ -1683,7 +1734,7 @@ async function analyzeSentiment() {
   try {
     const d=await fetch('/api/sentiment/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}).then(r=>r.json());
     if(d.error){toast(d.error,'err');return;}
-    document.getElementById('sent-emoji').textContent=d.emoji;
+    const seEl=document.getElementById('sent-emoji'); seEl.innerHTML=ic({'негативный':'frown','нейтральный':'meh','позитивный':'smile'}[d.label]||'meh'); seEl.className='big-ic '+({'негативный':'bad','позитивный':'good'}[d.label]||'');
     const lEl=document.getElementById('sent-label'); lEl.textContent=d.label.charAt(0).toUpperCase()+d.label.slice(1);
     const colors={негативный:'var(--red)',нейтральный:'var(--muted)',позитивный:'var(--green)'};
     lEl.style.color=colors[d.label]||'var(--text)';
@@ -1699,37 +1750,37 @@ async function analyzeSentiment() {
 // ═══════════════════════════════════════════════════════════
 const TS_MODES = {
   sales:  {
-    label:'📦 Данные: продажи за 30 дней (единиц)',
+    label:'Данные: продажи за 30 дней (единиц)',
     desc: 'Прогноз продаж товара на следующие 7 дней. Модель учитывает тренд и недельную сезонность.',
     unit:'ед.', period:'день', insight: v=>`Ожидаемый объём: ~${Math.round(v)} ед/день`,
     data:'280,295,310,290,285,320,340,260,280,295,285,290,315,335,270,285,300,280,275,310,330,265,280,295,275,270,305,325,290,310',
   },
   server: {
-    label:'🖥️ Данные: нагрузка CPU за 30 часов (%)',
+    label:'Данные: нагрузка CPU за 30 часов (%)',
     desc: 'Прогноз нагрузки сервера на ближайшие 7 часов. Пиковые значения — рабочие часы (9–18).',
-    unit:'%', period:'час', insight: v=>`Средняя нагрузка: ${Math.round(v)}%${v>70?' ⚠️ высокая':''}`,
+    unit:'%', period:'час', insight: v=>`Средняя нагрузка: ${Math.round(v)}%${v>70?' — высокая':''}`,
     data:'45,42,38,35,32,30,28,35,48,65,72,68,70,75,72,68,65,58,52,45,40,38,35,32,30,28,32,40,55,68',
   },
   traffic:{
-    label:'🚗 Данные: трафик за 30 периодов (авт/мин)',
+    label:'Данные: трафик за 30 периодов (авт/мин)',
     desc: 'Прогноз автомобильного потока. Каждое значение = 30 минут наблюдений. Часы пик — 8–9 и 18–19.',
     unit:'авт/мин', period:'период', insight: v=>`Ожидаемый поток: ~${Math.round(v)} авт/мин`,
     data:'12,8,6,5,4,3,5,15,45,82,72,65,70,75,85,88,80,72,65,75,90,95,88,75,55,35,22,15,12,9',
   },
   stocks:{
-    label:'📉 Данные: цена акций за 30 дней (руб)',
+    label:'Данные: цена акций за 30 дней (руб)',
     desc: 'Прогноз цены акции на следующие 7 дней. Учитывает тренд и волатильность. Применяется в алгоритмической торговле.',
     unit:'руб', period:'день', insight: v=>`Прогноз цены: ~${Math.round(v)} руб`,
     data:'152,155,148,161,158,163,170,165,172,168,175,180,177,183,179,186,190,184,192,195,188,197,201,196,204,208,202,210,215,209',
   },
   energy:{
-    label:'⚡ Данные: энергопотребление за 30 суток (МВт·ч)',
+    label:'Данные: энергопотребление за 30 суток (МВт·ч)',
     desc: 'Прогноз потребления электроэнергии предприятием. Пики — будние дни, спад — выходные. Нужен для закупки у поставщика.',
     unit:'МВт·ч', period:'сутки', insight: v=>`Ожидаемое потребление: ~${Math.round(v)} МВт·ч/сут`,
     data:'420,385,395,390,410,415,280,275,405,420,430,415,425,435,295,290,440,450,445,430,440,455,310,305,460,470,455,465,475,325',
   },
   calls:{
-    label:'📞 Данные: звонков в call-центр за 30 дней',
+    label:'Данные: звонков в call-центр за 30 дней',
     desc: 'Прогноз обращений в службу поддержки. Позволяет заранее выставить нужное число операторов. Пики — понедельник и пятница.',
     unit:'звонков', period:'день', insight: v=>`Ожидается ~${Math.round(v)} звонков — планируй ${Math.ceil(v/60)} операторов`,
     data:'320,285,295,290,310,340,185,178,305,325,335,320,330,345,190,182,340,355,350,335,345,358,205,195,365,375,360,370,380,215',
@@ -1784,7 +1835,7 @@ async function forecastTS() {
 // ═══════════════════════════════════════════════════════════
 // КЛАСТЕРИЗАЦИЯ
 // ═══════════════════════════════════════════════════════════
-const _clEmojis={'VIP':'👑','Активные':'⚡','Молодые':'🧑','Пассивные':'😴'};
+const _clEmojis={'VIP':'crown','Активные':'zap','Молодые':'user','Пассивные':'moon'};
 const _clColors={'VIP':'#f59e0b','Активные':'#22c55e','Молодые':'#3b82f6','Пассивные':'#6b7280'};
 function setCLEx(age,ord,avg,tot,days,vis){
   document.getElementById('cl-age').value=age;  document.getElementById('cl-age-v').textContent=age;
@@ -1802,9 +1853,9 @@ async function clusterCustomer(){
     const d=await fetch('/api/cluster/customer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
     if(d.error){toast(d.error,'err');return;}
     const seg=d.segment;
-    document.getElementById('cl-emoji').textContent=_clEmojis[seg]||'👤';
+    document.getElementById('cl-emoji').innerHTML=ic(_clEmojis[seg]||'user');
     const lbl=document.getElementById('cl-label'); lbl.textContent=seg; lbl.style.color=_clColors[seg]||'var(--accent)';
-    document.getElementById('cl-rec').textContent='💡 '+d.rec;
+    document.getElementById('cl-rec').textContent=d.rec;
   }catch(e){toast('Ошибка: '+e,'err');}
 }
 
@@ -1939,7 +1990,7 @@ async function clusterDocuments(){
       const col=colors[+ci%colors.length];
       return `<div style="margin-bottom:14px">
         <div style="font-weight:600;color:${col};margin-bottom:6px">
-          🏷️ Тема ${+ci+1}: <span style="font-weight:400;font-size:12px;color:var(--muted)">${esc(d.topics[+ci])}</span></div>
+          ${ic('tags')} Тема ${+ci+1}: <span style="font-weight:400;font-size:12px;color:var(--muted)">${esc(d.topics[+ci])}</span></div>
         ${ds.map(doc=>`<div style="background:var(--surf2);border-left:3px solid ${col};border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;line-height:1.5">${esc(doc)}</div>`).join('')}
       </div>`;
     }).join('');
@@ -1975,7 +2026,7 @@ async function checkAnomaly(){
     const d=await fetch('/api/anomaly/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
     if(d.error){toast(d.error,'err');return;}
     const isHigh=d.label==='ВЫСОКИЙ РИСК', isMid=d.label==='Подозрительно';
-    document.getElementById('an-emoji').textContent=isHigh?'🚨':isMid?'⚠️':'✅';
+    const anEl=document.getElementById('an-emoji'); anEl.innerHTML=ic(isHigh?'shield-alert':isMid?'triangle-alert':'shield-check'); anEl.className='big-ic '+(isHigh?'bad':isMid?'warn':'good');
     const lbl=document.getElementById('an-label');
     lbl.textContent=d.label; lbl.style.color=isHigh?'#ef4444':isMid?'#f59e0b':'#22c55e';
     const barWrap=document.getElementById('an-bar-wrap'); barWrap.style.display='block';
@@ -2013,13 +2064,13 @@ async function checkDefect(){
     const d=await fetch('/api/defect/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
     if(d.error){toast(d.error,'err');return;}
     const isDefect=d.label==='БРАК';
-    document.getElementById('df-emoji').textContent=isDefect?'❌':'✅';
+    const dfEl=document.getElementById('df-emoji'); dfEl.innerHTML=ic(isDefect?'circle-x':'circle-check'); dfEl.className='big-ic '+(isDefect?'bad':'good');
     const lbl=document.getElementById('df-label');
     lbl.textContent=isDefect?'БРАК':'НОРМА'; lbl.style.color=isDefect?'#ef4444':'#22c55e';
     document.getElementById('df-bars').innerHTML=`
-      <div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#ef4444">❌ Брак</span><span>${d.defect_prob}%</span></div>
+      <div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--red)">Брак</span><span>${d.defect_prob}%</span></div>
         <div style="background:var(--surf2);border-radius:4px;height:10px;overflow:hidden"><div style="width:${d.defect_prob}%;height:100%;background:#ef4444;transition:width .4s"></div></div></div>
-      <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#22c55e">✅ Норма</span><span>${d.ok_prob}%</span></div>
+      <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--green)">Норма</span><span>${d.ok_prob}%</span></div>
         <div style="background:var(--surf2);border-radius:4px;height:10px;overflow:hidden"><div style="width:${d.ok_prob}%;height:100%;background:#22c55e;transition:width .4s"></div></div></div>`;
   }catch(e){toast('Ошибка: '+e,'err');}
 }
@@ -2077,19 +2128,19 @@ async function analyzeSpam(){
     const d=await fetch('/api/spam/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}).then(r=>r.json());
     if(d.error){toast(d.error,'err');return;}
     const isSpam=d.label==='SPAM';
-    document.getElementById('spam-emoji').textContent=isSpam?'🚫':'✅';
+    const spEl=document.getElementById('spam-emoji'); spEl.innerHTML=ic(isSpam?'shield-alert':'shield-check'); spEl.className='big-ic '+(isSpam?'bad':'good');
     const lbl=document.getElementById('spam-label');
     lbl.textContent=isSpam?'СПАМ':'НЕ СПАМ';
     lbl.style.color=isSpam?'#ef4444':'#22c55e';
     document.getElementById('spam-bars').innerHTML=`
       <div style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="color:#ef4444">🚫 Спам</span><span>${d.spam_prob}%</span></div>
+          <span style="color:var(--red)">Спам</span><span>${d.spam_prob}%</span></div>
         <div style="background:var(--surf2);border-radius:4px;height:10px;overflow:hidden">
           <div style="width:${d.spam_prob}%;height:100%;background:#ef4444;transition:width .4s"></div></div></div>
       <div>
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="color:#22c55e">✅ Не спам</span><span>${d.ham_prob}%</span></div>
+          <span style="color:var(--green)">Не спам</span><span>${d.ham_prob}%</span></div>
         <div style="background:var(--surf2);border-radius:4px;height:10px;overflow:hidden">
           <div style="width:${d.ham_prob}%;height:100%;background:#22c55e;transition:width .4s"></div></div></div>`;
   } catch(e){toast('Ошибка: '+e,'err');}
@@ -2158,7 +2209,7 @@ async function analyzeNER(){
     if(!d.entities.length){document.getElementById('ner-list').innerHTML='<div style="color:var(--muted);font-size:12px">Сущности не найдены</div>';return;}
     const byType={};
     d.entities.forEach(e=>{if(!byType[e.type])byType[e.type]=[];byType[e.type].push(e.text);});
-    const typeNames={PER:'👤 Люди',ORG:'🏢 Организации',LOC:'🌍 Места',DATE:'📅 Даты'};
+    const typeNames={PER:ic('user')+' Люди',ORG:ic('building-2')+' Организации',LOC:ic('map-pin')+' Места',DATE:ic('calendar')+' Даты'};
     document.getElementById('ner-list').innerHTML=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">`+
       Object.entries(byType).map(([type,items])=>{
         const col=_nerColors[type]||'#fff';
@@ -2174,7 +2225,7 @@ async function analyzeNER(){
 let ganDigit=-1;
 (()=>{
   const sel=document.getElementById('gan-digit-sel');
-  const btns=[{v:-1,t:'🎲'},...Array.from({length:10},(_,i)=>({v:i,t:String(i)}))];
+  const btns=[{v:-1,t:ic('dices')},...Array.from({length:10},(_,i)=>({v:i,t:String(i)}))];
   sel.innerHTML=btns.map(b=>`<button class="d-btn${b.v===-1?' sel':''}" onclick="selectGanDigit(this,${b.v})">${b.t}</button>`).join('');
 })();
 
@@ -2447,7 +2498,7 @@ function deleteSession(id, e) {
 function _stripBase64(html) {
   // Заменяем base64-картинки на плейсхолдер, чтобы не переполнять localStorage
   return html.replace(/<img([^>]+)src="data:[^"]{20,}"([^>]*)>/g,
-    '<span style="background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;color:var(--muted)">📎 Фото</span>');
+    '<span style="background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;color:var(--muted)">Фото</span>');
 }
 
 function _saveCurrentSession() {
@@ -2475,10 +2526,10 @@ function renderSessionList() {
   el.innerHTML = sessions.map(s =>
     `<div class="nav-item chat-sess-item ${s.id===_curSessId?'active':''}" onclick="switchSession('${s.id}')"
       style="padding-left:28px;font-size:12px;position:relative">
-      <span class="icon">💬</span>
+      <span class="icon">${ic('message-square')}</span>
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.title)}</span>
-      <span onclick="renameSession('${s.id}',event)" style="opacity:.5;padding:0 3px;cursor:pointer" title="Переименовать">✏</span>
-      <span onclick="deleteSession('${s.id}',event)" style="opacity:.5;padding:0 4px;cursor:pointer" title="Удалить">✕</span>
+      <span onclick="renameSession('${s.id}',event)" style="opacity:.5;padding:0 3px;cursor:pointer" title="Переименовать">${ic('pencil')}</span>
+      <span onclick="deleteSession('${s.id}',event)" style="opacity:.5;padding:0 4px;cursor:pointer" title="Удалить">${ic('x')}</span>
     </div>`
   ).join('');
 }
@@ -2555,7 +2606,7 @@ async function sendChat(){
         ensureBot();
         if(!thinkEl){
           thinkEl=document.createElement('details');thinkEl.className='think';
-          thinkEl.innerHTML='<summary>💭 Думает…</summary><div class="think-body"></div>';
+          thinkEl.innerHTML='<summary>'+ic('brain-circuit')+' Думает…</summary><div class="think-body"></div>';
           botEl.insertBefore(thinkEl,answerEl);
         }
         thinkText+=evt.text;
@@ -2564,7 +2615,7 @@ async function sendChat(){
       }
       else if(evt.type==='token'){
         ensureBot();
-        if(thinkEl)thinkEl.querySelector('summary').textContent='💭 Размышления';
+        if(thinkEl)thinkEl.querySelector('summary').innerHTML=ic('brain-circuit')+' Размышления';
         fullText+=evt.text;
         answerEl.textContent=fullText;
         document.getElementById('chat-messages').scrollTop=99999;
@@ -2771,7 +2822,7 @@ async function runCodeReview() {
   if (!resp.ok) {
     const e = await resp.json().catch(()=>({}));
     toast(e.error || 'Ошибка', 'err');
-    btn.disabled = false; btn.textContent = '🔍 Проверить';
+    btn.disabled = false; btn.innerHTML = ic('scan-search') + ' Проверить';
     return;
   }
 
@@ -2796,7 +2847,7 @@ async function runCodeReview() {
             log.scrollTop = log.scrollHeight;
           }
           if (d.done) {
-            btn.disabled = false; btn.textContent = '🔍 Проверить';
+            btn.disabled = false; btn.innerHTML = ic('scan-search') + ' Проверить';
             document.getElementById('review-controls').style.display = 'none';
             if (d.code) {
               const panel = document.getElementById('review-code-panel');
@@ -2808,11 +2859,11 @@ async function runCodeReview() {
         } catch {}
       }
     }
-    btn.disabled = false; btn.textContent = '🔍 Проверить';
+    btn.disabled = false; btn.innerHTML = ic('scan-search') + ' Проверить';
   }
   readStream().catch(e => {
     toast('Ошибка потока: ' + e, 'err');
-    btn.disabled = false; btn.textContent = '🔍 Проверить';
+    btn.disabled = false; btn.innerHTML = ic('scan-search') + ' Проверить';
     document.getElementById('review-controls').style.display = 'none';
   });
 }
@@ -2848,7 +2899,7 @@ function shortModelName(id) {
   return name + quant;
 }
 
-const ROLE_ICONS = {coder:'💻', reasoner:'🧠', writer:'✍️', vision:'👁'};
+const ROLE_ICONS = {coder:'code-xml', reasoner:'brain-circuit', writer:'pen-line', vision:'eye'};
 const ROLE_NAMES = {coder:'Кодер', reasoner:'Аналитик', writer:'Писатель', vision:'Зрение'};
 
 // ═══════════════════════════════════════════════════════════
@@ -2881,7 +2932,7 @@ function maybeShowSetup() {
 }
 
 function lmChips(m) {
-  return [m.params, m.quant, m.size_gb != null ? `${m.size_gb} ГБ` : '', m.vision ? '👁 видит картинки' : '']
+  return [m.params, m.quant, m.size_gb != null ? `${m.size_gb} ГБ` : '', m.vision ? 'видит картинки' : '']
     .filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join('');
 }
 
@@ -2895,16 +2946,18 @@ function lmStatus(m) {
 function lmButtons(m, role) {
   const k = m.key ? `data-key="${esc(m.key)}"` : '';
   const b = [];
-  if (m.downloaded === false && role) b.push(`<button class="btn btn-primary btn-sm lm-dl" data-role="${esc(role)}" onclick="lmDownload({role: this.dataset.role}, this)">📥 Скачать</button>`);
+  if (m.downloaded === false && role) b.push(`<button class="btn btn-primary btn-sm lm-dl" data-role="${esc(role)}" onclick="lmDownload({role: this.dataset.role}, this)">${ic('download')} Скачать</button>`);
   if (m.key && !m.loaded && m.type !== 'embedding') b.push(`<button class="btn btn-outline btn-sm" ${k} onclick="lmAction('load', this)" title="Загрузить в видеопамять заранее">▶ В память</button>`);
   if (m.key && m.loaded) b.push(`<button class="btn btn-outline btn-sm" ${k} onclick="lmAction('unload_one', this)" title="Освободить видеопамять">⏏ Выгрузить</button>`);
-  if (m.key && m.deletable) b.push(`<button class="btn btn-danger btn-sm" ${k} data-size="${m.size_gb || 0}" onclick="lmDelete(this)" title="Удалить с диска">🗑</button>`);
+  if (m.key && m.deletable) b.push(`<button class="btn btn-danger btn-sm" ${k} data-size="${m.size_gb || 0}" onclick="lmDelete(this)" title="Удалить с диска">${ic('trash-2')}</button>`);
+  // Модели, которые LM Studio ставит вместе с собой (Nomic Embed), отдельно не удаляются — объясняем, а не прячем кнопку молча
+  else if (m.builtin) b.push(`<span class="lm-note">${ic('lock')} Встроена в LM Studio — удаляется только вместе с ним</span>`);
   return b.join('');
 }
 
 function lmRoleRow(r) {
   return `<div class="lm-row">
-    <div class="lm-icon">${ROLE_ICONS[r.role] || '🤖'}</div>
+    <div class="lm-icon">${ic(ROLE_ICONS[r.role] || 'bot')}</div>
     <div class="lm-main">
       <div class="lm-title">${esc(r.title)} ${lmStatus(r)}</div>
       ${r.about ? `<div class="lm-about">${esc(r.about)}</div>` : ''}
@@ -2917,7 +2970,7 @@ function lmRoleRow(r) {
 
 function lmOtherRow(m) {
   return `<div class="lm-row">
-    <div class="lm-icon">${m.type === 'embedding' ? '🔢' : m.vision ? '👁' : '💬'}</div>
+    <div class="lm-icon">${ic(m.type === 'embedding' ? 'hash' : m.vision ? 'eye' : 'message-square')}</div>
     <div class="lm-main">
       <div class="lm-title">${esc(m.name)} ${lmStatus({...m, downloaded: true})}</div>
       <div class="lm-meta">${lmChips(m)}<span class="lm-repo">${esc(m.key)}</span></div>
@@ -3061,7 +3114,7 @@ let _hwAbort = null;
 function hwStop(){
   if(_hwAbort){_hwAbort.abort();}
   document.getElementById('hw-btn').disabled=false;
-  document.getElementById('hw-btn').textContent='🔍 Найти ответ';
+  document.getElementById('hw-btn').innerHTML=ic('search')+' Найти ответ';
   document.getElementById('hw-stop-btn').style.display='none';
   document.getElementById('hw-loading').style.display='none';
   toast('Остановлено','warn');
@@ -3115,7 +3168,7 @@ async function hwSolve() {
     loading.style.display = 'none';
     if(e.name!=='AbortError'){errEl.textContent = '⚠ ' + e.message; errEl.style.display = 'block';}
   }
-  btn.disabled = false; btn.textContent = '🔍 Найти ответ';
+  btn.disabled = false; btn.innerHTML = ic('search') + ' Найти ответ';
   stopBtn.style.display = 'none';
   _hwAbort = null;
 }
@@ -3128,7 +3181,7 @@ function hwAddHistory(subject, text, img, answer, explanation) {
   const item = document.createElement('div');
   item.style.cssText = 'padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:12px';
   const preview = img ? `<img src="${img}" style="max-height:40px;border-radius:4px;margin-right:8px;vertical-align:middle">` : '';
-  const q = text ? text.substring(0, 80) + (text.length > 80 ? '…' : '') : '📷 фото';
+  const q = text ? text.substring(0, 80) + (text.length > 80 ? '…' : '') : 'фото';
   item.innerHTML = `
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
       ${preview}
@@ -3186,7 +3239,7 @@ async function generateImage() {
     else if (d.error) { res.innerHTML = `<span style="color:var(--red)">${esc(d.error)}</span>`; }
     else { res.innerHTML = `<img src="${d.image}" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">`; }
   } catch(e) { res.innerHTML = `<span style="color:var(--red)">Ошибка: ${e}</span>`; }
-  btn.disabled = false; btn.innerHTML = '✨ Создать';
+  btn.disabled = false; btn.innerHTML = ic('wand-sparkles') + ' Создать';
   if (stop) stop.style.display = 'none';
 }
 
@@ -3203,9 +3256,9 @@ async function refreshDrawAddon() {
   const model = s.model_gb ? `Модель SDXL-Turbo уже скачана (${s.model_gb} ГБ).` : 'Модель SDXL-Turbo (6,5 ГБ) скачается при установке.';
   box.style.display = 'block';
   if (s.builtin) {
-    text.innerHTML = `✅ Рисование работает через Python, из которого запущена программа. ${model}`;
+    text.innerHTML = `${ic('circle-check')} Рисование работает через Python, из которого запущена программа. ${model}`;
   } else if (s.addon) {
-    text.innerHTML = `✅ Модуль установлен (${s.torch === 'cuda' ? 'видеокарта' : 'процессор'}, ${s.addon_gb} ГБ). ${model}`;
+    text.innerHTML = `${ic('circle-check')} Модуль установлен (${s.torch === 'cuda' ? 'видеокарта' : 'процессор'}, ${s.addon_gb} ГБ). ${model}`;
   } else {
     text.innerHTML = `Чтобы рисовать, нужен модуль рисования — он не входит в установщик, чтобы тот оставался лёгким.
       Скачается один раз: Python, PyTorch ${s.gpu ? 'для видеокарты NVIDIA (~2,5 ГБ, на диске ~5 ГБ)' : 'для процессора (~0,3 ГБ)'} и diffusers. ${model}`;
@@ -3234,8 +3287,8 @@ async function drawAddonInstall(btn) {
       if (e.error && !e.done) err = e.error;
     }
   } catch (e) { err = String(e); }
-  if (err) line.textContent = '❌ ' + err;
-  if (ok) { bar.style.width = '100%'; line.textContent = '✅ Готово — можно рисовать'; }
+  if (err) line.textContent = 'Ошибка: ' + err;
+  if (ok) { bar.style.width = '100%'; line.textContent = 'Готово — можно рисовать'; }
   toast(ok ? 'Модуль рисования установлен' : (err || 'Установка не удалась'), ok ? 'ok' : 'err');
   refreshDrawAddon();
 }
