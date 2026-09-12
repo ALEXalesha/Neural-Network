@@ -1523,6 +1523,22 @@ def stop():
     _stop_ev.set()
     return jsonify({"ok": True})
 
+UI_THEMES  = {"", "midnight", "graphite", "light", "sepia"}
+UI_ACCENTS = {"", "blue", "green", "orange", "pink", "teal"}
+
+@app.route("/api/ui", methods=["POST"])
+def save_ui():
+    """Тема и акцент для экрана загрузки. Окно показывает его до запуска сервера и читает их из ui.json."""
+    d = request.get_json(silent=True)
+    d = d if isinstance(d, dict) else {}
+    ui = {}
+    for key, allowed in (("theme", UI_THEMES), ("accent", UI_ACCENTS)):
+        v = d.get(key)
+        if isinstance(v, str) and v and v in allowed:
+            ui[key] = v
+    (DATA_DIR / "ui.json").write_text(json.dumps(ui), encoding="utf-8")
+    return jsonify(ui)
+
 @app.route("/api/unload", methods=["POST"])
 def unload_all():
     """Выгружает модели из LM Studio и модуль рисования при закрытии приложения."""

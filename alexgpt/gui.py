@@ -7,60 +7,74 @@ import subprocess
 import sys
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlencode
 
 from PyQt6.QtCore import QTimer, QUrl, Qt
-from PyQt6.QtGui import QAction, QColor, QFont, QIcon, QPainter, QPixmap
+from PyQt6.QtGui import QAction, QColor, QDesktopServices, QFont, QIcon, QPainter, QPixmap
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu, QSystemTrayIcon
 
-from paths import DATA_DIR, FROZEN
+from paths import APP_DIR, DATA_DIR, FROZEN
 
 WIN_CMD = DATA_DIR / ".win_cmd"
 NO_WIN  = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+STATIC  = APP_DIR / "static"
+LOADER  = STATIC / "loading.html"
+MAX_ICON = '<svg class="ic"><use href="/static/icons.svg#i-{}"/></svg>'
 
-LOADING_HTML = """<!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
-html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}
-#root{position:absolute;inset:8px;border-radius:12px;background:#0d1117;
-      box-shadow:0 12px 48px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.07);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
-.icon{font-size:72px;animation:pulse 2s ease-in-out infinite}
-h1{font-size:28px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#3b82f6);
-   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-p{color:#8b949e;font-size:14px;text-align:center;padding:0 20px}
-.spin{width:40px;height:40px;border:3px solid #21262d;border-top-color:#7c3aed;
-      border-radius:50%;animation:spin .8s linear infinite}
-.err{color:#f85149;font-size:13px;max-width:500px;white-space:pre-wrap;text-align:left;
-     background:#161b22;padding:12px;border-radius:6px;font-family:monospace;display:none;
-     max-height:300px;overflow:auto}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-</style></head>
-<body><div id="root">
-<div class="icon">🧠</div>
-<h1>AlexGPT</h1>
-<div class="spin" id="spin"></div>
-<p id="msg">Запуск сервера…</p>
-<div class="err" id="err"></div>
-</div></body></html>"""
+
+def loader_query(data_dir: Path = DATA_DIR) -> dict:
+    """Тема и акцент для экрана загрузки. localStorage программы до запуска сервера недоступен,
+    поэтому программа сохраняет их в ui.json (POST /api/ui)."""
+    try:
+        ui = json.loads((data_dir / "ui.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(ui, dict):
+        return {}
+    query = {}
+    for key in ("theme", "accent"):
+        v = ui.get(key)
+        if isinstance(v, str) and v.isascii() and v.isalpha() and len(v) <= 20:
+            query[key] = v
+    return query
 
 
 def make_icon(size: int = 48) -> QIcon:
+    """Запасной значок, если logo.png не нашёлся."""
     pix = QPixmap(size, size)
     pix.fill(QColor("transparent"))
     p = QPainter(pix)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
-    p.setBrush(QColor("#7c3aed"))
+    p.setBrush(QColor("#7c5cff"))
     p.setPen(Qt.PenStyle.NoPen)
-    p.drawEllipse(1, 1, size - 2, size - 2)
+    p.drawRoundedRect(1, 1, size - 2, size - 2, size * .28, size * .28)
     p.setPen(QColor("white"))
     f = QFont(); f.setPixelSize(size // 2); f.setBold(True)
     p.setFont(f)
     p.drawText(pix.rect(), Qt.AlignmentFlag.AlignCenter, "A")
     p.end()
     return QIcon(pix)
+
+
+def app_icon() -> QIcon:
+    logo = STATIC / "logo.png"
+    return QIcon(str(logo)) if logo.exists() else make_icon()
+
+
+class WindowPage(QWebEnginePage):
+    """Экран загрузки не может звать сервер (его ещё нет), поэтому команды окну пишет в консоль:
+    console.log('alexgpt:startmove'). Слушаем только локальный файл экрана загрузки."""
+
+    def __init__(self, profile, parent, on_cmd):
+        super().__init__(profile, parent)
+        self._on_cmd = on_cmd
+
+    def javaScriptConsoleMessage(self, level, message, line, source):
+        if message.startswith("alexgpt:") and self.url().isLocalFile():
+            self._on_cmd(message.split(":", 1)[1])
 
 
 class MainWindow(QMainWindow):
@@ -72,6 +86,8 @@ class MainWindow(QMainWindow):
         self.server = server
         self._really_close = False
         self._server_wait_elapsed = 0
+        self._loader_ready = False
+        self._pending_js = None
         self.setWindowTitle("AlexGPT")
         self.setMinimumSize(960, 640)
         self.resize(1400, 870)
@@ -79,7 +95,7 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        icon = make_icon()
+        icon = app_icon()
         self.setWindowIcon(icon)
 
         # defaultProfile() в Qt 6 — "инкогнито": localStorage с историей чатов терялся бы при выходе
@@ -94,9 +110,11 @@ class MainWindow(QMainWindow):
                 ws.setAttribute(a, True)
 
         self.view = QWebEngineView()
-        self.view.setPage(QWebEnginePage(self.profile, self.view))
-        self.view.page().setBackgroundColor(QColor("#0d1117"))
-        self.view.setHtml(LOADING_HTML)
+        self.view.setPage(WindowPage(self.profile, self.view, self._loader_cmd))
+        # Прозрачный фон: скруглённые углы и тень рисует сама страница
+        self.view.page().setBackgroundColor(QColor(0, 0, 0, 0))
+        self.view.loadFinished.connect(self._on_load_finished)
+        self._show_loader()
         self.setCentralWidget(self.view)
 
         self._setup_tray(icon)
@@ -112,6 +130,47 @@ class MainWindow(QMainWindow):
         self._cmd_timer.timeout.connect(self._check_win_cmd)
         self._cmd_timer.start()
 
+    # ── Экран загрузки ──
+    def _show_loader(self):
+        self._loader_ready = False
+        url = QUrl.fromLocalFile(str(LOADER))
+        url.setQuery(urlencode(loader_query()))
+        self.view.load(url)
+
+    def _on_load_finished(self, ok):
+        if not self.view.url().isLocalFile():
+            return
+        self._loader_ready = True
+        if self._pending_js:
+            self.view.page().runJavaScript(self._pending_js)
+            self._pending_js = None
+
+    def _loader_js(self, js):
+        if self._loader_ready:
+            self.view.page().runJavaScript(js)
+        else:
+            self._pending_js = js
+
+    def _loader_cmd(self, cmd):
+        if cmd == "startmove":
+            self.windowHandle().startSystemMove()
+        elif cmd == "minimize":
+            self.showMinimized()
+        elif cmd == "quit":
+            self.quit_app()
+        elif cmd == "openlog":
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(DATA_DIR)))
+        elif cmd == "restart":
+            self._restart_server()
+
+    def _restart_server(self):
+        if self.server.poll() is None:
+            self.server.kill()
+        self.server = spawn_server(self.port)
+        self._server_wait_elapsed = 0
+        self._show_loader()
+        self._server_timer.start()
+
     # Перемещение и ресайз окна без рамки делает сам UI: JS шлёт startmove/startresize_*
     def _check_win_cmd(self):
         if not WIN_CMD.exists():
@@ -124,15 +183,14 @@ class MainWindow(QMainWindow):
         if cmd == "minimize":
             self.showMinimized()
         elif cmd == "maximize":
-            if self.isMaximized():
-                self.showNormal()
-                js = ("document.documentElement.setAttribute('data-max','0');"
-                      "var ic=document.getElementById('max-icon');if(ic)ic.textContent='☐';")
-            else:
-                self.showMaximized()
-                js = ("document.documentElement.setAttribute('data-max','1');"
-                      "var ic=document.getElementById('max-icon');if(ic)ic.textContent='❐';")
-            self.view.page().runJavaScript(js)
+            maximized = not self.isMaximized()
+            self.showMaximized() if maximized else self.showNormal()
+            icon = json.dumps(MAX_ICON.format("copy" if maximized else "square"))
+            title = json.dumps("Восстановить" if maximized else "Развернуть")
+            self.view.page().runJavaScript(
+                f"document.documentElement.setAttribute('data-max','{int(maximized)}');"
+                f"var ic=document.getElementById('max-icon');if(ic)ic.innerHTML={icon};"
+                f"var b=document.getElementById('btn-max');if(b)b.title={title};")
         elif cmd == "hide":
             self.hide()
             self.tray.showMessage("AlexGPT", "Приложение работает в трее",
@@ -155,9 +213,9 @@ class MainWindow(QMainWindow):
         self.tray = QSystemTrayIcon(icon, self)
         self.tray.setToolTip("AlexGPT")
         menu = QMenu()
-        menu.addAction(QAction("📂  Открыть", self, triggered=self.show_from_tray))
+        menu.addAction(QAction("Открыть", self, triggered=self.show_from_tray))
         menu.addSeparator()
-        menu.addAction(QAction("✕  Выйти", self, triggered=self.quit_app))
+        menu.addAction(QAction("Выйти", self, triggered=self.quit_app))
         self.tray.setContextMenu(menu)
         self.tray.activated.connect(
             lambda r: self.show_from_tray()
@@ -184,7 +242,7 @@ class MainWindow(QMainWindow):
     def _check_server(self):
         if self.server.poll() is not None:
             self._server_timer.stop()
-            self._show_server_error("Сервер завершился с ошибкой. Лог:")
+            self._show_server_error("Сервер завершился с ошибкой")
             return
         try:
             socket.create_connection(("127.0.0.1", self.port), timeout=0.15).close()
@@ -192,20 +250,17 @@ class MainWindow(QMainWindow):
             self._server_wait_elapsed += self._server_timer.interval()
             if self._server_wait_elapsed >= self.SERVER_TIMEOUT_MS:
                 self._server_timer.stop()
-                self._show_server_error("Сервер не отвечает за 2 минуты. Лог:")
+                self._show_server_error(f"Сервер не ответил за {self.SERVER_TIMEOUT_MS // 60000} минут")
             return
         self._server_timer.stop()
-        self.view.load(QUrl(f"http://127.0.0.1:{self.port}"))
+        # Короткое затухание экрана загрузки, потом сама программа
+        self._loader_js("typeof finish === 'function' && finish()")
+        QTimer.singleShot(260, lambda: self.view.load(QUrl(f"http://127.0.0.1:{self.port}")))
 
     def _show_server_error(self, title):
         log_path = DATA_DIR / "server.log"
         tail = log_path.read_text(encoding="utf-8", errors="replace")[-2500:] if log_path.exists() else ""
-        self.view.page().runJavaScript(
-            "document.getElementById('spin').style.display='none';"
-            f"document.getElementById('msg').textContent={json.dumps(title)};"
-            "var e=document.getElementById('err');e.style.display='block';"
-            f"e.textContent={json.dumps(tail)};"
-        )
+        self._loader_js(f"showError({json.dumps(title)}, {json.dumps(tail)})")
 
 
 def pick_port():
@@ -252,8 +307,7 @@ def main():
     instance.listen(instance_name)
 
     port = pick_port()
-    server = spawn_server(port)
-    win = MainWindow(port, server)
+    win = MainWindow(port, spawn_server(port))
     instance.newConnection.connect(lambda: (instance.nextPendingConnection(), win.show_from_tray()))
 
     def on_quit():
@@ -263,11 +317,11 @@ def main():
                 headers={"Content-Type": "application/json"}), timeout=3)
         except OSError:
             pass
-        server.terminate()
+        win.server.terminate()          # после «Перезапустить» это уже новый процесс сервера
         try:
-            server.wait(timeout=3)
+            win.server.wait(timeout=3)
         except subprocess.TimeoutExpired:
-            server.kill()
+            win.server.kill()
         WIN_CMD.unlink(missing_ok=True)
 
     app.aboutToQuit.connect(on_quit)

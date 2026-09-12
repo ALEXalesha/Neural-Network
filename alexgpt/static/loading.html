@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AlexGPT</title>
+<link rel="stylesheet" href="theme.css">
+<script>
+// Тема и акцент приходят от окна (?theme=&accent=), чтобы экран загрузки был в тех же цветах, что программа
+(function () {
+  var q = new URLSearchParams(location.search), h = document.documentElement;
+  if (q.get('theme')) h.dataset.theme = q.get('theme');
+  if (q.get('accent')) h.dataset.accent = q.get('accent');
+})();
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:var(--f-ui);color:var(--text);
+  -webkit-font-smoothing:antialiased;user-select:none;cursor:default}
+.ic{width:1em;height:1em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* Та же рамка, что у программы, чтобы переход был незаметным */
+#root{position:absolute;inset:8px;border-radius:14px;overflow:hidden;background:var(--bg);
+  box-shadow:0 18px 60px var(--shadow),0 0 0 1px var(--border);display:flex;flex-direction:column}
+
+/* Заголовок: за него можно тянуть окно, пока программа запускается */
+#bar{height:42px;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center}
+#bar .logo{display:flex;align-items:center;gap:10px;padding:0 16px;height:100%;opacity:0;transition:opacity .25s}
+#bar .logo svg{width:24px;height:24px}
+#bar .name{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.2px}
+#drag{flex:1;height:100%}
+.btn{width:46px;height:100%;border:none;background:transparent;color:var(--muted);font-size:15px;display:flex;align-items:center;justify-content:center;
+  transition:background .12s,color .12s}
+.btn:hover{background:var(--surf2);color:var(--text)}
+.btn.close:hover{background:#e81123;color:#fff}
+
+#stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:32px 32px;background-position:center}
+#stage::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 40%,rgba(var(--accent-rgb),.17),transparent 36%)}
+#center{position:relative;display:flex;flex-direction:column;align-items:center;transition:opacity .25s,transform .25s}
+
+/* Логотип собирается: плитка, связи, узлы; потом по узлам сверху вниз бежит сигнал */
+.mark{width:104px;height:104px;overflow:visible;filter:drop-shadow(0 10px 30px rgba(var(--accent-rgb),.45))}
+.mark .tile{fill:var(--accent);transform-origin:16px 16px;animation:tile .6s cubic-bezier(.2,.9,.3,1.25) both}
+.mark .edge{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw .7s ease-out .2s forwards}
+.mark .e2{animation-delay:.35s}.mark .e3{animation-delay:.55s}
+.mark .node{fill:#fff;transform-box:fill-box;transform-origin:center;transform:scale(0);
+  animation:pop .35s cubic-bezier(.2,.9,.3,1.5) var(--d) forwards,fire 2.4s ease-in-out calc(1.4s + var(--f)) infinite}
+@keyframes tile{from{transform:scale(.6);opacity:0}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{to{transform:scale(1)}}
+@keyframes fire{0%,55%,100%{opacity:.55}18%{opacity:1}}
+
+h1{margin-top:28px;font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:.5px;animation:up .5s .35s both}
+.tag{margin-top:8px;color:var(--muted);font-size:13px;animation:up .5s .45s both}
+.track{margin-top:36px;width:220px;height:3px;border-radius:3px;background:var(--surf2);overflow:hidden;animation:up .5s .55s both}
+.track i{display:block;width:38%;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  animation:slide 1.4s ease-in-out infinite}
+.status{margin-top:14px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);display:flex;gap:10px;animation:up .5s .6s both}
+.status .t{color:var(--faint)}
+.hint{margin-top:18px;max-width:400px;text-align:center;font-size:12px;line-height:1.55;color:var(--faint);opacity:0;transition:opacity .6s}
+.hint.show{opacity:1}
+@keyframes up{from{opacity:0;transform:translateY(8px)}}
+@keyframes slide{from{transform:translateX(-105%)}to{transform:translateX(270%)}}
+
+/* Ошибка запуска: лог и что с этим делать */
+#err{display:none;width:min(640px,86vw);margin-top:26px;flex-direction:column;gap:12px}
+body.error .track,body.error .status,body.error .hint{display:none}
+body.error #err{display:flex}
+body.error .mark{filter:drop-shadow(0 10px 30px rgba(242,85,90,.35))}
+body.error .mark .tile{fill:var(--red)}
+body.error .mark .node{animation:none;transform:scale(1);opacity:1}
+#err .title{color:var(--red);font-weight:600;font-size:14px;text-align:center}
+#err pre{font-family:var(--f-mono);font-size:11px;line-height:1.5;color:var(--muted);background:var(--surf);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;max-height:34vh;overflow:auto;white-space:pre-wrap;word-break:break-word;user-select:text;cursor:text}
+#err .acts{display:flex;gap:8px;justify-content:center}
+.b{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--surf2);
+  color:var(--text);font:500 13px var(--f-ui);cursor:pointer;transition:border-color .12s,background .12s}
+.b:hover{border-color:var(--accent)}
+.b.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.b.primary:hover{background:var(--accent-hover)}
+
+/* Сервер готов: центр гаснет, логотип встаёт в заголовок, как в программе */
+body.done #center{opacity:0;transform:scale(.97)}
+body.done #bar .logo{opacity:1}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01s!important;animation-iteration-count:1!important;transition:none!important}
+  .track i{width:100%}
+}
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="bar">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M16 7 8.5 25M16 7l7.5 18M11.6 17.5h8.8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/><g fill="#fff"><circle cx="16" cy="7" r="2.6"/><circle cx="8.5" cy="25" r="2.6"/><circle cx="23.5" cy="25" r="2.6"/><circle cx="11.6" cy="17.5" r="2"/><circle cx="20.4" cy="17.5" r="2"/></g></svg>
+      <span class="name">AlexGPT</span>
+    </div>
+    <div id="drag"></div>
+    <button class="btn" onclick="cmd('minimize')" title="Свернуть"><svg class="ic"><use href="icons.svg#i-minus"/></svg></button>
+    <button class="btn close" onclick="cmd('quit')" title="Закрыть"><svg class="ic"><use href="icons.svg#i-x"/></svg></button>
+  </div>
+  <div id="stage">
+    <div id="center">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect class="tile" width="32" height="32" rx="9"/>
+        <path class="edge e1" pathLength="1" d="M16 7 8.5 25"/>
+        <path class="edge e2" pathLength="1" d="M16 7l7.5 18"/>
+        <path class="edge e3" pathLength="1" d="M11.6 17.5h8.8"/>
+        <circle class="node" style="--d:.15s;--f:0s" cx="16" cy="7" r="2.6"/>
+        <circle class="node" style="--d:.6s;--f:.35s" cx="11.6" cy="17.5" r="2"/>
+        <circle class="node" style="--d:.65s;--f:.35s" cx="20.4" cy="17.5" r="2"/>
+        <circle class="node" style="--d:.8s;--f:.7s" cx="8.5" cy="25" r="2.6"/>
+        <circle class="node" style="--d:.85s;--f:.7s" cx="23.5" cy="25" r="2.6"/>
+      </svg>
+      <h1>AlexGPT</h1>
+      <div class="tag">Нейросети на твоём компьютере</div>
+      <div class="track"><i></i></div>
+      <div class="status"><span id="msg">Запускаю сервер</span><span class="t" id="t">0:00</span></div>
+      <div class="hint" id="hint">Первый запуск после установки или обновления дольше обычного: антивирус проверяет файлы программы. Дальше будет быстрее.</div>
+      <div id="err">
+        <div class="title" id="err-title"></div>
+        <pre id="err-log"></pre>
+        <div class="acts">
+          <button class="b primary" onclick="cmd('restart')"><svg class="ic"><use href="icons.svg#i-refresh-cw"/></svg>Перезапустить</button>
+          <button class="b" onclick="cmd('openlog')"><svg class="ic"><use href="icons.svg#i-folder-tree"/></svg>Открыть папку с логом</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// Сервера ещё нет, поэтому команды окну идут через консоль: gui.py ловит строки 'alexgpt:…'
+function cmd(c) { console.log('alexgpt:' + c); }
+document.getElementById('drag').addEventListener('mousedown', function (e) {
+  if (e.button === 0) { cmd('startmove'); e.preventDefault(); }
+});
+
+var started = Date.now(), timer = setInterval(tick, 500);
+function tick() {
+  var s = Math.floor((Date.now() - started) / 1000);
+  document.getElementById('t').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  document.getElementById('msg').textContent = s < 3 ? 'Запускаю сервер' : 'Загружаю библиотеки нейросетей';
+  if (s >= 15) document.getElementById('hint').classList.add('show');
+}
+function finish() { clearInterval(timer); document.body.classList.add('done'); }
+function showError(title, log) {
+  clearInterval(timer);
+  document.body.classList.add('error');
+  document.getElementById('err-title').textContent = title;
+  var pre = document.getElementById('err-log');
+  pre.textContent = log || 'Лог пуст';
+  pre.scrollTop = pre.scrollHeight;
+}
+</script>
+</body>
+</html>
