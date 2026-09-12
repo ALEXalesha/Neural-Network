@@ -1361,10 +1361,20 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--border);border-bot
 
       <!-- DRAW -->
       <div id="sec-draw" class="section">
+        <div class="panel" id="draw-addon" style="margin-bottom:14px;display:none">
+          <div class="panel-title">🧩 Модуль рисования</div>
+          <div id="draw-addon-text" style="font-size:13px;line-height:1.6"></div>
+          <div class="btn-row" style="margin-top:10px">
+            <button class="btn btn-primary" id="draw-addon-install" onclick="drawAddonInstall(this)">📥 Установить модуль рисования</button>
+            <button class="btn btn-danger btn-sm" id="draw-addon-remove" onclick="drawAddonRemove(false)">🗑 Удалить модуль</button>
+            <button class="btn btn-danger btn-sm" id="draw-addon-remove-all" onclick="drawAddonRemove(true)">🗑 Удалить модуль и модель</button>
+          </div>
+          <div class="lm-progress" id="draw-addon-progress"></div>
+        </div>
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
-            <div class="panel-title">🖼 Генерация изображений</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Модель SDXL-Turbo (Hugging Face / diffusers) — первый запуск скачает ~6ГБ</div>
+            <div class="panel-title">🖼 Нарисовать по описанию</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px">SDXL-Turbo: картинка 512×512 за 1–3 секунды на видеокарте, за минуту-две на процессоре.</div>
             <div class="form-group"><label>Описание изображения (на английском)</label>
               <textarea id="draw-prompt" rows="4" placeholder="a futuristic city at night, cyberpunk style, neon lights…"></textarea></div>
             <div class="btn-row">
@@ -1463,7 +1473,7 @@ const PAGES = {
   recommender:'Рекомендации фильмов', spam:'Спам-детектор', anomaly:'Аномалии транзакций', defect:'Контроль качества',
   ner:'Сущности (NER)', sentiment:'Тональность текста', mnist:'Рисование цифр (CNN)', sketch:'Угадай рисунок',
   translator:'Переводчик EN↔RU', gpt:'Генерация текста', summarize:'Суммаризация', gan:'Генерация цифр (GAN)',
-  draw:'Генерация изображений', homework:'Решить тест', chat:'Умный чат', coder:'Команда кодеров',
+  draw:'Нарисовать по описанию', homework:'Решить тест', chat:'Умный чат', coder:'Команда кодеров',
   'coder-v2':'Команда v2', 'code-review':'Проверка кода', 'lm-models':'Модели: скачать и удалить', logs:'Логи сервера',
   settings:'Настройки',
 };
@@ -1482,6 +1492,7 @@ function go(page) {
   if (tbpt) tbpt.textContent = title;
   if (page === 'recommender') loadRecCatalog();
   if (page === 'lm-models') refreshLMModels();
+  if (page === 'draw') refreshDrawAddon();
   // Показываем мастер настройки только при входе в разделы с чатом/кодерами
   const LM_CHAT_SECTIONS = ['chat', 'coder', 'coder-v2'];
   if (LM_CHAT_SECTIONS.includes(page)) maybeShowSetup();
@@ -3182,6 +3193,62 @@ async function generateImage() {
 async function stopDraw() {
   await fetch('/api/draw/stop', {method:'POST'}).catch(()=>{});
   toast('Остановка генерации…', 'ok');
+}
+
+// Модуль рисования: свой Python + torch + diffusers в папке данных, ставится и удаляется отсюда
+async function refreshDrawAddon() {
+  let s;
+  try { s = await fetch('/api/draw/addon').then(r => r.json()); } catch (e) { return; }
+  const box = document.getElementById('draw-addon'), text = document.getElementById('draw-addon-text');
+  const model = s.model_gb ? `Модель SDXL-Turbo уже скачана (${s.model_gb} ГБ).` : 'Модель SDXL-Turbo (6,5 ГБ) скачается при установке.';
+  box.style.display = 'block';
+  if (s.builtin) {
+    text.innerHTML = `✅ Рисование работает через Python, из которого запущена программа. ${model}`;
+  } else if (s.addon) {
+    text.innerHTML = `✅ Модуль установлен (${s.torch === 'cuda' ? 'видеокарта' : 'процессор'}, ${s.addon_gb} ГБ). ${model}`;
+  } else {
+    text.innerHTML = `Чтобы рисовать, нужен модуль рисования — он не входит в установщик, чтобы тот оставался лёгким.
+      Скачается один раз: Python, PyTorch ${s.gpu ? 'для видеокарты NVIDIA (~2,5 ГБ, на диске ~5 ГБ)' : 'для процессора (~0,3 ГБ)'} и diffusers. ${model}`;
+  }
+  document.getElementById('draw-addon-install').style.display = s.ready ? 'none' : '';
+  document.getElementById('draw-addon-install').disabled = s.installing;
+  document.getElementById('draw-addon-remove').style.display = s.addon ? '' : 'none';
+  document.getElementById('draw-addon-remove-all').style.display = (s.addon || s.model_gb) && !s.builtin ? '' : 'none';
+  document.getElementById('draw-btn').disabled = !s.ready;
+}
+
+async function drawAddonInstall(btn) {
+  const prog = document.getElementById('draw-addon-progress');
+  btn.disabled = true;
+  prog.style.display = 'block';
+  prog.innerHTML = '<div class="lm-bar"><div></div></div><div class="lm-line">Начинаю установку…</div>';
+  const line = prog.querySelector('.lm-line'), bar = prog.querySelector('.lm-bar div');
+  let ok = false, err = '', step = 0;
+  try {
+    for await (const e of streamSSE('/api/draw/addon/install', {})) {
+      if (e.line) {
+        line.textContent = e.line;
+        if (e.line.startsWith('▶')) { step++; bar.style.width = Math.min(95, step * 20) + '%'; }
+      }
+      if (e.done) { ok = e.ok; err = e.error || ''; }
+      if (e.error && !e.done) err = e.error;
+    }
+  } catch (e) { err = String(e); }
+  if (err) line.textContent = '❌ ' + err;
+  if (ok) { bar.style.width = '100%'; line.textContent = '✅ Готово — можно рисовать'; }
+  toast(ok ? 'Модуль рисования установлен' : (err || 'Установка не удалась'), ok ? 'ok' : 'err');
+  refreshDrawAddon();
+}
+
+async function drawAddonRemove(withModel) {
+  const what = withModel ? 'модуль рисования и модель SDXL-Turbo (освободится ~12 ГБ)' : 'модуль рисования (модель SDXL-Turbo останется)';
+  if (!confirm(`Удалить ${what}?`)) return;
+  try {
+    const d = await fetch('/api/draw/addon/remove', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({model: withModel})}).then(r => r.json());
+    toast(d.error ? d.error : `Удалено, освобождено ${d.freed_gb} ГБ`, d.error ? 'err' : 'ok');
+  } catch (e) { toast('Ошибка: ' + e, 'err'); }
+  refreshDrawAddon();
 }
 
 // ═══════════════════════════════════════════════════════════

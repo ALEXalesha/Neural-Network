@@ -155,15 +155,22 @@ def run_epoch(model, src, tgt, batch, optimizer=None, scheduler=None, criterion=
     return total / n
 
 
-def train_direction(name, src_tr, tgt_tr, src_val, tgt_val, src_tok, tgt_tok, epochs=40, batch=256, patience=4):
+def train_direction(name, src_tr, tgt_tr, src_val, tgt_val, src_tok, tgt_tok, epochs=40, batch=256, patience=4,
+                    resume=False, lr=5e-4, warmup=4000):
     model = TranslatorBPE(src_tok.get_vocab_size(), tgt_tok.get_vocab_size(), **CONFIG).to(DEVICE)
     print(f"\n=== {name}: {sum(p.numel() for p in model.parameters()):,} параметров ===")
     criterion = nn.CrossEntropyLoss(ignore_index=PAD, label_smoothing=0.1)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=5e-4, betas=(0.9, 0.98), weight_decay=1e-4)
-    steps, warmup = epochs * math.ceil(len(src_tr) / batch), 4000
+    if resume:
+        model.load_state_dict(torch.load(BASE / f"translator_bpe_{name}.pth", weights_only=True)["model"])
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, betas=(0.9, 0.98), weight_decay=1e-4)
+    steps = epochs * math.ceil(len(src_tr) / batch)
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda s: min((s + 1) / warmup, 0.5 * (1 + math.cos(math.pi * min(s, steps) / steps))))
-    best, bad = float("inf"), 0
+    # При продолжении лучший результат — уже сохранённая модель, хуже её не перезаписываем
+    best = run_epoch(model, src_val, tgt_val, 512, criterion=criterion) if resume else float("inf")
+    if resume:
+        print(f"  продолжаю с сохранённой модели, val {best:.3f}")
+    bad = 0
     for epoch in range(1, epochs + 1):
         t0 = time.time()
         tr = run_epoch(model, src_tr, tgt_tr, batch, optimizer, scheduler, criterion)
@@ -183,15 +190,28 @@ def train_direction(name, src_tr, tgt_tr, src_val, tgt_val, src_tok, tgt_tok, ep
 
 
 def main():
+    # python train_translator_bpe.py --resume ru2en 20 — дообучить направление ещё 20 эпох,
+    # не трогая BPE (иначе сломается второе направление, обученное на тех же токенайзерах)
+    resume = sys.argv[1:3] if len(sys.argv) > 2 and sys.argv[1] == "--resume" else None
     pairs = build_pairs()
     en_texts, ru_texts = [p[0] for p in pairs], [p[1] for p in pairs]
-    print("Обучаю BPE...")
-    en_tok, ru_tok = train_bpe(en_texts, "bpe_en.json"), train_bpe(ru_texts, "bpe_ru.json")
+    if resume:
+        en_tok, ru_tok = Tokenizer.from_file(str(BASE / "bpe_en.json")), Tokenizer.from_file(str(BASE / "bpe_ru.json"))
+    else:
+        print("Обучаю BPE...")
+        en_tok, ru_tok = train_bpe(en_texts, "bpe_en.json"), train_bpe(ru_texts, "bpe_ru.json")
     EN = torch.tensor([encode(t, en_tok) for t in en_texts])
     RU = torch.tensor([encode(t, ru_tok) for t in ru_texts])
     n_val = 3000
-    train_direction("en2ru", EN[n_val:], RU[n_val:], EN[:n_val], RU[:n_val], en_tok, ru_tok)
-    train_direction("ru2en", RU[n_val:], EN[n_val:], RU[:n_val], EN[:n_val], ru_tok, en_tok)
+    data = {"en2ru": (EN[n_val:], RU[n_val:], EN[:n_val], RU[:n_val], en_tok, ru_tok),
+            "ru2en": (RU[n_val:], EN[n_val:], RU[:n_val], EN[:n_val], ru_tok, en_tok)}
+    if resume:
+        name, epochs = resume[1], int(sys.argv[3]) if len(sys.argv) > 3 else 20
+        # Косинус на середине пути даёт lr ≈ 2.5e-4 — с него и продолжаем, с коротким разогревом
+        train_direction(name, *data[name], epochs=epochs, resume=True, lr=2.5e-4, warmup=500)
+    else:
+        for name in data:
+            train_direction(name, *data[name])
     print("\nГотово. Скопируй translator_bpe_*.pth и bpe_en.json, bpe_ru.json в ../models")
 
 

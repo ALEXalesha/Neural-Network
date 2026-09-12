@@ -1517,7 +1517,8 @@ def stop():
 
 @app.route("/api/unload", methods=["POST"])
 def unload_all():
-    """Выгружает модели из LM Studio при закрытии приложения."""
+    """Выгружает модели из LM Studio и модуль рисования при закрытии приложения."""
+    stop_draw_worker()
     if not (lm_in_memory() and lms_path()):
         return jsonify({"ok": True})
     lms_run("unload", "--all", timeout=15)
@@ -1554,60 +1555,220 @@ def unload_model(model):
         removed = list(_cache) if model == "all" else [k for k in keys if k in _cache]
         for k in removed:
             del _cache[k]
+    if model in ("all", "draw") and _draw.proc is not None:
+        stop_draw_worker()      # SDXL держит ~7 ГБ видеопамяти в отдельном процессе
+        removed.append("draw")
     if DEVICE.type == "cuda":
         torch.cuda.empty_cache()
     import gc; gc.collect()
     log(f"Выгружено из памяти: {removed or ['ничего не найдено']}", "INFO")
     return jsonify({"ok": True, "removed": removed})
 
-# ── Генерация изображений (SDXL-Turbo через Hugging Face diffusers) ──
-_draw_pipe  = None
-_draw_lock  = threading.Lock()
-_draw_stop  = False
+# ── Рисование по описанию: SDXL-Turbo в отдельном процессе («модуль рисования») ──
+# CUDA-torch + diffusers весят ~5 ГБ, поэтому в установщик их не кладём: модуль ставится по кнопке
+# в папку данных (uv разворачивает свой Python и пакеты), рисует отдельный процесс draw_worker.py.
+# Модель SDXL-Turbo берётся из общего кэша Hugging Face и между модулем и исходниками не дублируется.
+DRAW_ADDON  = DATA_DIR / "addons" / "draw"
+DRAW_STOP   = DATA_DIR / "draw.stop"
+DRAW_MODEL  = "stabilityai/sdxl-turbo"
+UV_URL      = "https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip"
+TORCH_INDEX = {"cuda": "https://download.pytorch.org/whl/cu130", "cpu": "https://download.pytorch.org/whl/cpu"}
+DRAW_PKGS   = ["diffusers", "transformers", "accelerate", "safetensors"]
+SNAPSHOT_CODE = ("from huggingface_hub import snapshot_download; "
+                 f"snapshot_download({DRAW_MODEL!r}, allow_patterns=['*.json', '*.txt', '*.fp16.safetensors'])")
+_draw = SimpleNamespace(proc=None, lock=threading.Lock(), installing=False)
 
-def load_draw():
-    global _draw_pipe
-    with _draw_lock:
-        if _draw_pipe is None:
-            try:
-                from diffusers import AutoPipelineForText2Image
-            except ImportError:
-                abort(501, "Генерация картинок недоступна в собранной версии." if FROZEN else
-                      "Нужен пакет diffusers: pip install diffusers transformers accelerate")
-            log("Загрузка SDXL-Turbo (diffusers)…")
-            kw = {"torch_dtype": torch.float16, "variant": "fp16"} if DEVICE.type == "cuda" else {"torch_dtype": torch.float32}
-            _draw_pipe = AutoPipelineForText2Image.from_pretrained("stabilityai/sdxl-turbo", **kw).to(DEVICE)
-            log("SDXL-Turbo готов")
-    return _draw_pipe
+def draw_addon_python():
+    py = DRAW_ADDON / "venv" / "Scripts" / "python.exe"
+    return py if (DRAW_ADDON / "installed.json").exists() and py.exists() else None
+
+def draw_python():
+    """Чем рисовать: Python модуля рисования, а при запуске из исходников — текущий, если в нём есть diffusers."""
+    if py := draw_addon_python():
+        return str(py)
+    if not FROZEN:
+        import importlib.util
+        if importlib.util.find_spec("diffusers"):
+            return sys.executable
+    return None
+
+def hf_model_dir():
+    hub = os.environ.get("HF_HUB_CACHE") or Path(os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface")) / "hub"
+    return Path(hub) / ("models--" + DRAW_MODEL.replace("/", "--"))
+
+def dir_size_gb(p):
+    # В кэше Hugging Face snapshots/ — ссылки на blobs/; по ссылкам не идём, иначе размер удваивается
+    try:
+        return round(sum(f.stat().st_size for f in p.rglob("*") if f.is_file() and not f.is_symlink()) / 1e9, 1) \
+            if p.exists() else 0.0
+    except OSError:
+        return 0.0
+
+def clean_env(**extra):
+    """Окружение для чужого Python: без переменных PyInstaller, которые сбили бы его импорты."""
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith(("_PYI", "_MEI")) and k not in ("PYTHONPATH", "PYTHONHOME")}
+    return {**env, "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1", **extra}
+
+def stop_draw_worker():
+    proc, _draw.proc = _draw.proc, None
+    if proc and proc.poll() is None:
+        try:
+            proc.stdin.close()          # draw_worker завершается, когда закрыт stdin
+            proc.wait(timeout=10)
+        except (OSError, subprocess.TimeoutExpired):
+            proc.kill()
+
+def start_draw_worker():
+    if _draw.proc and _draw.proc.poll() is None:
+        return _draw.proc
+    py = draw_python()
+    if not py:
+        abort(501, "Модуль рисования не установлен — нажми «Установить модуль рисования»")
+    log("Запуск модуля рисования (загрузка SDXL-Turbo)…")
+    env = clean_env(ALEXGPT_DRAW_STOP=str(DRAW_STOP), ALEXGPT_DRAW_MODEL=DRAW_MODEL)
+    if hf_model_dir().exists():
+        env["HF_HUB_OFFLINE"] = "1"     # модель уже скачана — не ходим в интернет при каждом запуске
+    err_log = open(DATA_DIR / "draw_worker.log", "a", encoding="utf-8")
+    proc = subprocess.Popen([py, "-u", str(APP_DIR / "draw_worker.py")], stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE, stderr=err_log, text=True, encoding="utf-8",
+                            errors="replace", creationflags=NO_WINDOW, env=env, cwd=str(DATA_DIR))
+    err_log.close()
+    first = proc.stdout.readline()
+    try:
+        ready = json.loads(first) if first else {"error": "модуль рисования завершился при запуске"}
+    except ValueError:
+        ready = {"error": f"непонятный ответ модуля рисования: {first[:200]}"}
+    if not ready.get("ready"):
+        proc.kill()
+        log(f"Модуль рисования: {ready.get('error')}", "ERROR")
+        abort(502, f"{ready.get('error')} (подробности в draw_worker.log)")
+    log(f"Модуль рисования готов ({ready.get('device')})")
+    _draw.proc = proc
+    return proc
+
+@app.route("/api/draw/addon")
+def draw_addon_status():
+    info = {}
+    if (DRAW_ADDON / "installed.json").exists():
+        try:
+            info = json.loads((DRAW_ADDON / "installed.json").read_text(encoding="utf-8"))
+        except ValueError:
+            pass
+    py = draw_python()
+    return jsonify({"ready": py is not None, "addon": draw_addon_python() is not None,
+                    "builtin": py is not None and draw_addon_python() is None,
+                    "gpu": bool(shutil.which("nvidia-smi")), "installing": _draw.installing,
+                    "addon_gb": info.get("size_gb", 0), "torch": info.get("torch"),
+                    "model_gb": dir_size_gb(hf_model_dir()),
+                    "running": _draw.proc is not None and _draw.proc.poll() is None})
+
+def stream_process(cmd, env):
+    """Выполняет команду и отдаёт её вывод строками SSE (прогресс-бары не чаще 3 раз в секунду); возвращает код."""
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                            text=True, encoding="utf-8", errors="replace", creationflags=NO_WINDOW, env=env)
+    last, sent_at = "", 0.0
+    try:
+        for raw in proc.stdout:        # в текстовом режиме \r тоже конец строки — прогресс приходит построчно
+            line = ANSI_RE.sub("", raw).strip()
+            if not line or line == last or ("%" in line and time.time() - sent_at < 0.33):
+                continue
+            last, sent_at = line, time.time()
+            yield sse({"line": line[:300]})
+        return proc.wait()
+    finally:
+        if proc.poll() is None:
+            proc.terminate()
+
+def download_uv(dest):
+    import zipfile
+    r = requests.get(UV_URL, timeout=120)
+    r.raise_for_status()
+    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        member = next(n for n in z.namelist() if n.endswith("uv.exe"))
+        (dest / "uv.exe").write_bytes(z.read(member))
+
+@app.route("/api/draw/addon/install", methods=["POST"])
+def draw_addon_install():
+    if _draw.installing:
+        abort(409, "Установка уже идёт")
+    gpu = bool(shutil.which("nvidia-smi"))
+    _draw.installing = True
+
+    def gen():
+        try:
+            DRAW_ADDON.mkdir(parents=True, exist_ok=True)
+            # Свой Python — внутри папки модуля, без кэша пакетов: удаление модуля убирает всё
+            env = clean_env(UV_PYTHON_INSTALL_DIR=str(DRAW_ADDON / "python"), UV_NO_CACHE="1")
+            uv = shutil.which("uv") or str(DRAW_ADDON / "uv.exe")
+            if not Path(uv).exists():
+                yield sse({"line": "▶ Скачиваю uv — установщик Python (~20 МБ)"})
+                download_uv(DRAW_ADDON)
+            venv = DRAW_ADDON / "venv"
+            py = str(venv / "Scripts" / "python.exe")
+            steps = [
+                ("Python 3.12", [uv, "venv", "--python", "3.12", "--allow-existing", str(venv)]),
+                ("PyTorch для видеокарты NVIDIA (~2,5 ГБ)" if gpu else "PyTorch для процессора (~0,3 ГБ)",
+                 [uv, "pip", "install", "--python", py, "torch", "--index-url", TORCH_INDEX["cuda" if gpu else "cpu"]]),
+                ("diffusers и transformers (~0,1 ГБ)", [uv, "pip", "install", "--python", py, *DRAW_PKGS]),
+                ("Модель SDXL-Turbo (6,5 ГБ, если ещё не скачана)", [py, "-c", SNAPSHOT_CODE]),
+            ]
+            for title, cmd in steps:
+                yield sse({"line": f"▶ {title}"})
+                code = yield from stream_process(cmd, env)
+                if code != 0:
+                    yield sse({"done": True, "ok": False, "error": f"Шаг «{title}» завершился с ошибкой (код {code})"})
+                    return
+            (DRAW_ADDON / "installed.json").write_text(json.dumps({
+                "torch": "cuda" if gpu else "cpu", "size_gb": dir_size_gb(DRAW_ADDON),
+                "date": datetime.now().isoformat(timespec="seconds")}), encoding="utf-8")
+            log("Модуль рисования установлен")
+            yield sse({"done": True, "ok": True})
+        except Exception as e:
+            log(f"Установка модуля рисования: {e}", "ERROR")
+            yield sse({"done": True, "ok": False, "error": str(e)})
+        finally:
+            _draw.installing = False
+    return event_stream(gen())
+
+@app.route("/api/draw/addon/remove", methods=["POST"])
+def draw_addon_remove():
+    if _draw.installing:
+        abort(409, "Дождись окончания установки")
+    with_model = body().get("model") is True
+    stop_draw_worker()
+    freed = 0.0
+    for p in [DRAW_ADDON] + ([hf_model_dir()] if with_model else []):
+        if p.exists():
+            freed += dir_size_gb(p)
+            shutil.rmtree(p)
+    log(f"Модуль рисования удалён{' вместе с моделью' if with_model else ''}, освобождено {freed:.1f} ГБ")
+    return jsonify({"ok": True, "freed_gb": round(freed, 1)})
 
 @app.route("/api/draw/stop", methods=["POST"])
 def draw_stop():
-    global _draw_stop
-    _draw_stop = True
+    DRAW_STOP.touch()
     return jsonify({"ok": True})
 
 @app.route("/api/draw", methods=["POST"])
 def draw_image():
-    global _draw_stop
     prompt = text_field(body(), "prompt")
-    _draw_stop = False
-    pipe = load_draw()
-
-    def _check_stop(pipe, step, timestep, kwargs):
-        if _draw_stop:
-            raise InterruptedError
-        return kwargs
-
+    with _draw.lock:
+        proc = start_draw_worker()
+        DRAW_STOP.unlink(missing_ok=True)   # «Стоп», нажатый до этой картинки, её не касается
+        try:
+            proc.stdin.write(json.dumps({"prompt": prompt}, ensure_ascii=False) + "\n")
+            proc.stdin.flush()
+            line = proc.stdout.readline()
+        except OSError:
+            line = ""
+    if not line:
+        stop_draw_worker()
+        abort(502, "Модуль рисования неожиданно завершился (подробности в draw_worker.log)")
     try:
-        out = pipe(prompt=prompt, num_inference_steps=1 if DEVICE.type == "cuda" else 4,
-                   guidance_scale=0.0, width=512, height=512, callback_on_step_end=_check_stop)
-    except InterruptedError:
-        return jsonify({"error": "Остановлено"})
-    if _draw_stop:
-        return jsonify({"error": "Остановлено"})
-    buf = io.BytesIO()
-    out.images[0].save(buf, format="PNG")
-    return jsonify({"image": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()})
+        return jsonify(json.loads(line))
+    except ValueError:
+        abort(502, "Непонятный ответ модуля рисования")
 
 # ── Coder Team ──
 _coder_procs = {}

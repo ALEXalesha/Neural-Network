@@ -19,6 +19,8 @@ datas += [
     (str(APP / 'templates'), 'templates'),
     (str(APP / 'static'), 'static'),
     (str(APP / 'lm_config.json'), '.'),
+    # Рисование работает в отдельном Python «модуля рисования», сам скрипт едет с программой
+    (str(APP / 'draw_worker.py'), '.'),
 ]
 datas += [(str(p), 'models') for p in sorted((ROOT / 'models').iterdir()) if p.suffix in ('.pth', '.json')]
 
