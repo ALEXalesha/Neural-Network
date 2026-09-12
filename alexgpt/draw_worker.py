@@ -34,7 +34,14 @@ def main():
         # В кэше лежат только fp16-веса; на CPU они загружаются и приводятся к float32
         pipe = AutoPipelineForText2Image.from_pretrained(
             MODEL, variant="fp16", torch_dtype=torch.float16 if cuda else torch.float32)
-        pipe = pipe.to("cuda" if cuda else "cpu")
+        # Целиком SDXL занимает ~9 ГБ видеопамяти. На карте поменьше драйвер выгружает её в общую память,
+        # и картинка рисуется 30 с вместо 1-3. Текстовые энкодеры (1,6 ГБ) тогда остаются на CPU.
+        split = cuda and torch.cuda.get_device_properties(0).total_memory < 11 * 2**30
+        if split:
+            pipe.unet.to("cuda")
+            pipe.vae.to("cuda")
+        else:
+            pipe = pipe.to("cuda" if cuda else "cpu")
         pipe.set_progress_bar_config(disable=True)
     except Exception as e:
         send({"error": f"Не удалось загрузить модель рисования: {e}"})
@@ -50,8 +57,15 @@ def main():
         try:
             req = json.loads(line)
             steps = max(1, min(int(req.get("steps") or (1 if cuda else 4)), 8))
-            out = pipe(prompt=str(req["prompt"]), num_inference_steps=steps, guidance_scale=0.0,
-                       width=512, height=512, callback_on_step_end=check_stop)
+            args = dict(num_inference_steps=steps, guidance_scale=0.0, width=512, height=512,
+                        callback_on_step_end=check_stop)
+            if split:
+                with torch.no_grad():
+                    emb, _, pooled, _ = pipe.encode_prompt(str(req["prompt"]), device="cpu",
+                                                           do_classifier_free_guidance=False)
+                out = pipe(prompt_embeds=emb.to("cuda"), pooled_prompt_embeds=pooled.to("cuda"), **args)
+            else:
+                out = pipe(prompt=str(req["prompt"]), **args)
             buf = io.BytesIO()
             out.images[0].save(buf, format="PNG")
             send({"image": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()})
