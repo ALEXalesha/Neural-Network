@@ -19,7 +19,7 @@ from werkzeug.exceptions import HTTPException
 
 from paths import APP_DIR, DATA_DIR, FROZEN, MODELS_DIR as MODELS, lm_config_path, script_cmd
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 warnings.filterwarnings("ignore")
 if hasattr(sys.stdout, "reconfigure"):
