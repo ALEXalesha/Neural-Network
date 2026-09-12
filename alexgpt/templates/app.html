@@ -253,9 +253,20 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
 
 /* ══ Чат ══ */
 #chat-messages{height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 2px}
-.msg{max-width:82%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg{max-width:82%;padding:12px 16px;border-radius:14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .msg-user{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px}
 .msg-bot{align-self:flex-start;background:var(--surf2);border:1px solid var(--border);border-bottom-left-radius:4px}
+/* Отрисованный Markdown: обычные переносы и отступы (общий сброс обнулял их — текст и номера списков липли к рамке) */
+.msg.md{white-space:normal}
+.msg.md>*:first-child{margin-top:0}.msg.md>*:last-child{margin-bottom:0}
+.msg.md p{margin:0 0 8px}
+.msg.md ul,.msg.md ol{margin:4px 0 10px;padding-left:24px}
+.msg.md li{margin:3px 0}.msg.md li>p{margin:0}
+.msg.md h1,.msg.md h2,.msg.md h3,.msg.md h4{font-size:14px;font-weight:700;margin:12px 0 6px}
+.msg.md blockquote{border-left:3px solid var(--border2);padding-left:10px;color:var(--muted);margin:6px 0}
+.msg.md table{border-collapse:collapse;margin:8px 0;font-size:12.5px}.msg.md td,.msg.md th{border:1px solid var(--border);padding:4px 8px}
+.msg.md .katex-display{margin:8px 0;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.msg.md hr{border:none;border-top:1px solid var(--border);margin:10px 0}
 .msg-bot pre,.msg-bot code{font-family:var(--f-mono);font-size:12px}
 .msg-bot pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;white-space:pre}
 .model-badge{font-family:var(--f-mono);font-size:10px;background:rgba(76,141,255,.12);color:var(--blue);border:1px solid rgba(76,141,255,.3);border-radius:6px;padding:1px 7px;display:inline-block;margin-bottom:3px}
@@ -2406,6 +2417,7 @@ function renderMd(el, text) {
   // Размышления R1 внутри сообщения (details) не трогаем — перерисовываем только ответ
   const think = el.querySelector(':scope > .think');
   el.innerHTML = html;
+  el.classList.add('md');
   if (think) el.prepend(think);
   if (window._katexReady) {
     renderMathInElement(el, {delimiters:[
@@ -2460,7 +2472,7 @@ function switchSession(id) {
   if (sess) {
     sess.msgs.forEach(m => {
       const div = document.createElement('div');
-      div.className = m.role === 'user' ? 'msg msg-user' : 'msg msg-bot';
+      div.className = m.role === 'user' ? 'msg msg-user' : 'msg msg-bot md';
       div.innerHTML = m.html;
       list.appendChild(div);
     });
@@ -2548,7 +2560,7 @@ function loadHistory() {
   const list = document.getElementById('chat-messages');
   sessions[0].msgs.forEach(m => {
     const div = document.createElement('div');
-    div.className = m.role === 'user' ? 'msg msg-user' : 'msg msg-bot';
+    div.className = m.role === 'user' ? 'msg msg-user' : 'msg msg-bot md';
     div.innerHTML = m.html;
     list.appendChild(div);
   });
