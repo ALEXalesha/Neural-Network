@@ -17,9 +17,9 @@ from flask import Flask, Response, abort, jsonify, request, stream_with_context
 from PIL import Image, UnidentifiedImageError
 from werkzeug.exceptions import HTTPException
 
-from paths import APP_DIR, DATA_DIR, FROZEN, MODELS_DIR as MODELS, lm_config_path, script_cmd
+from paths import APP_DIR, DATA_DIR, FROZEN, MODELS_DIR as MODELS, lm_config_path, lm_studio_url, script_cmd
 
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 
 warnings.filterwarnings("ignore")
 if hasattr(sys.stdout, "reconfigure"):
@@ -584,7 +584,7 @@ def _load_lm_cfg():
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
 
 LM_CFG  = _load_lm_cfg()
-LM_URL  = LM_CFG.get("lm_studio_url", "http://localhost:1234/v1")
+LM_URL  = lm_studio_url(LM_CFG)
 LM_HOST = LM_URL.rsplit("/v1", 1)[0]
 LM_MDLS = LM_CFG.get("models", {})
 LM_KWS  = LM_CFG.get("routing_keywords", {})

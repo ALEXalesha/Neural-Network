@@ -16,7 +16,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 import requests
 
-from paths import DATA_DIR, lm_config_path
+from paths import DATA_DIR, lm_config_path, lm_studio_url
 
 # ──────────────────────────────────────────────────────
 # КОНФИГ
@@ -28,7 +28,7 @@ def load_config():
     return {}
 
 CFG    = load_config()
-LM_URL = CFG.get('lm_studio_url', 'http://localhost:1234/v1')
+LM_URL = lm_studio_url(CFG)
 MODELS = CFG.get('models', {})
 
 # model_id для каждого агента

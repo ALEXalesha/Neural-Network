@@ -21,7 +21,7 @@ from pathlib import Path
 
 import requests
 
-from paths import DATA_DIR, FROZEN, lm_config_path, pyfile_cmd
+from paths import DATA_DIR, FROZEN, lm_config_path, lm_studio_url, pyfile_cmd
 
 _iter_arg = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2].isdigit() else None
 MAX_ITERATIONS = int(_iter_arg or os.environ.get("CODER_V2_MAX_ITER", 4))
@@ -36,7 +36,7 @@ def load_config():
     return {}
 
 CFG    = load_config()
-LM_URL = CFG.get('lm_studio_url', 'http://localhost:1234/v1')
+LM_URL = lm_studio_url(CFG)
 MODELS = CFG.get('models', {})
 
 AGENT_MODELS = {

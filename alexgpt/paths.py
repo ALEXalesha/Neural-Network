@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 FROZEN = getattr(sys, "frozen", False)
 EXE_DIR = Path(sys.executable).parent if FROZEN else None
@@ -27,6 +28,17 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 def lm_config_path():
     user_cfg = DATA_DIR / "lm_config.json"
     return user_cfg if user_cfg.exists() else APP_DIR / "lm_config.json"
+
+
+def lm_studio_url(cfg):
+    """Адрес LM Studio из конфига. localhost заменяется на 127.0.0.1: Windows сначала пробует IPv6 (::1),
+    LM Studio слушает только IPv4, и каждый запрос ждал бы ~2 с, пока попытка по IPv6 не откажет."""
+    url = urlsplit(str(cfg.get("lm_studio_url") or "http://localhost:1234/v1"))
+    userinfo, at, hostport = url.netloc.rpartition("@")
+    host, colon, port = hostport.partition(":")
+    if host.lower() == "localhost":
+        url = url._replace(netloc=f"{userinfo}{at}127.0.0.1{colon}{port}")
+    return urlunsplit(url)
 
 
 def script_cmd(name, *args):
