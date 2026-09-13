@@ -590,9 +590,20 @@ LM_MDLS = LM_CFG.get("models", {})
 LM_KWS  = LM_CFG.get("routing_keywords", {})
 _stop_ev = threading.Event()
 
+LM_LOCAL = urlparse(LM_URL).hostname in ("127.0.0.1", "::1")
+
+def lm_timeout(timeout, local=None):
+    """Таймаут (подключение, ответ). Windows отказывает в подключении к закрытому порту только через ~2 с,
+    поэтому к LM Studio на этом компьютере подключаемся за 0,5 с: запущенный он принимает за миллисекунды,
+    а выключенный иначе тормозил бы каждую проверку статуса."""
+    if isinstance(timeout, tuple):
+        return timeout
+    local = LM_LOCAL if local is None else local
+    return (min(0.5, timeout), timeout) if local else timeout
+
 def lm_get(url, timeout=2):
     try:
-        r = requests.get(url, timeout=timeout)
+        r = requests.get(url, timeout=lm_timeout(timeout))
         return r.json() if r.ok else None
     except (requests.RequestException, ValueError):
         return None

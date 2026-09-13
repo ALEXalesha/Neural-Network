@@ -32,6 +32,31 @@ def test_default_and_credentials():
     assert lm_studio_url({"lm_studio_url": "http://u:p@localhost:1234/v1"}) == "http://u:p@127.0.0.1:1234/v1"
 
 
+def test_lm_timeout_short_connect_only_for_this_computer(server):
+    # Выключенный LM Studio: Windows отказывает только через ~2 с, короткий таймаут подключения экономит их
+    assert server.lm_timeout(2, local=True) == (0.5, 2)
+    assert server.lm_timeout(0.3, local=True) == (0.3, 0.3)
+    assert server.lm_timeout(2, local=False) == 2
+    assert server.lm_timeout((1, 5), local=True) == (1, 5)
+    assert server.LM_LOCAL, "в стандартном конфиге LM Studio на этом компьютере"
+
+
+def test_lm_studio_off_answers_fast(server, monkeypatch):
+    # Настоящий запрос на закрытый порт (в остальных тестах сеть подменена): на Windows без короткого
+    # таймаута подключения отказ приходит через ~2 с, и столько же ждал каждый опрос статуса
+    import socket
+    import time
+    import requests
+    monkeypatch.setattr(requests, "get", requests.api.get)
+    monkeypatch.setattr(server, "LM_LOCAL", True)
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    t = time.time()
+    assert server.lm_get(f"http://127.0.0.1:{port}/v1/models") is None
+    assert time.time() - t < 1.5
+
+
 def test_every_module_uses_helper():
     # Если где-то снова прочитать адрес напрямую из конфига, вернётся задержка в 2 с на каждый запрос
     for name in ("app_server.py", "coder_team.py", "coder_team_v2.py"):
