@@ -979,7 +979,7 @@ kbd{font-family:var(--f-mono);font-size:10.5px;border:1px solid var(--border2);b
         <div class="tool-wrap">
           <div class="tool-input"><div class="panel">
             <div class="panel-title"><svg class="ic"><use href="/static/icons.svg#i-shapes"/></svg> Нарисуй — угадаю</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Цифры, буквы, фигуры, предметы (кошка, дом, машина…) и математические знаки — 160 классов. Угадывает, как только отпускаешь мышь.</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Цифры, буквы, фигуры, предметы (кошка, дом, машина…) и математические знаки — 160 классов. Можно писать несколько символов рядом, например число «65» — читает слева направо. Угадывает, как только отпускаешь мышь.</div>
             <canvas id="sketch-canvas" width="400" height="400" style="display:block;width:100%;max-width:400px;aspect-ratio:1;border:2px solid var(--border);border-radius:8px;cursor:crosshair;background:#000;touch-action:none"></canvas>
             <div class="form-group" style="margin-top:10px"><label>Толщина кисти: <span id="sketch-pen-val">24</span></label>
               <input type="range" id="sketch-pen" min="8" max="48" value="24" oninput="document.getElementById('sketch-pen-val').textContent=this.value"></div>
@@ -2269,6 +2269,17 @@ async function sketchPredict(){
     const sure = d.guesses.filter(g => g.prob >= 30), unsure = d.guesses.filter(g => g.prob < 30 && g.prob >= 2);
     const row = g => `<div class="digit-conf"><span style="width:auto;min-width:90px;text-align:left;color:var(--text);font-size:14px">${esc(g.label)}</span>
       <div class="bar"><div class="bar-fill" style="width:${g.prob}%"></div></div><span>${g.prob}%</span></div>`;
+    if (d.symbols) {
+      // Несколько символов рядом: сервер прочитал их по одному, слева направо.
+      const alt = s => s.alt.prob >= 2 ? ` <span style="color:var(--muted);font-size:12px">или ${esc(s.alt.label)} ${s.alt.prob}%</span>` : '';
+      res.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:6px">${d.confidence >= 30 ? 'Думаю, это:' : 'Не уверен, но похоже на:'}</div>
+        <div style="font-size:28px;font-weight:600;color:var(--text);letter-spacing:2px;word-break:break-all">${esc(d.text)}</div>
+        <div style="font-size:12px;color:var(--muted);margin:4px 0 12px">уверенность ${d.confidence}%</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">По символам:</div>`
+        + d.symbols.map(s => `<div class="digit-conf"><span style="width:auto;min-width:90px;text-align:left;color:var(--text);font-size:14px">${esc(s.label)}${alt(s)}</span>
+          <div class="bar"><div class="bar-fill" style="width:${s.prob}%"></div></div><span>${s.prob}%</span></div>`).join('');
+      return;
+    }
     res.innerHTML = (sure.length ? `<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Думаю, это:</div>${sure.map(row).join('')}` : '')
       + (unsure.length ? `<div style="font-size:12px;color:var(--muted);margin:12px 0 6px">Не уверен:</div>${unsure.map(row).join('')}` : '')
       || 'Не пойму, что это';

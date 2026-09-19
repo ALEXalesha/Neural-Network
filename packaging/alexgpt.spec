@@ -26,7 +26,7 @@ datas += [(str(p), 'models') for p in sorted((ROOT / 'models').iterdir()) if p.s
 
 # Модули, которые запускаются через `AlexGPT.exe --run`, и stdlib для тестов,
 # которые пишет Coder Team v2 (они выполняются внутри exe через --pyfile)
-hidden += ['app_server', 'gui', 'paths', 'coder_team', 'coder_team_v2']
+hidden += ['app_server', 'gui', 'paths', 'coder_team', 'coder_team_v2', 'sketch_segment']
 hidden += ['unittest', 'unittest.mock', 'doctest', 'dataclasses', 'decimal', 'fractions', 'statistics',
            'heapq', 'bisect', 'csv', 'sqlite3', 'string', 'textwrap', 'calendar', 'uuid', 'hmac',
            'secrets', 'pprint', 'queue', 'argparse', 'difflib', 'fnmatch', 'glob', 'shutil', 'zipfile',

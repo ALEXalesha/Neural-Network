@@ -18,8 +18,9 @@ from PIL import Image, UnidentifiedImageError
 from werkzeug.exceptions import HTTPException
 
 from paths import APP_DIR, DATA_DIR, FROZEN, MODELS_DIR as MODELS, lm_config_path, lm_studio_url, script_cmd
+import sketch_segment
 
-VERSION = "1.2.2"
+VERSION = "1.3.0"
 
 warnings.filterwarnings("ignore")
 if hasattr(sys.stdout, "reconfigure"):
@@ -1056,15 +1057,35 @@ def sketch_predict():
     if img.width * img.height > 4096 * 4096:
         abort(400, "Слишком большое изображение")
     top = int_field(d, "top", 8, 1, 20)
-    frame = sketch_frame(np.asarray(img.convert("L"), dtype=np.float32) / 255.0)
+    arr = np.asarray(img.convert("L"), dtype=np.float32) / 255.0
+    frame = sketch_frame(arr)
     if frame is None:
         abort(400, "Холст пустой")
     m = load_sketch()
-    with torch.inference_mode():
-        probs = torch.softmax(m.model(torch.from_numpy(frame).view(1, 1, 28, 28).to(DEVICE)), 1)[0].cpu()
+
+    def sketch_probs(frames):
+        x = torch.from_numpy(np.stack(frames)).view(-1, 1, 28, 28).to(DEVICE)
+        with torch.inference_mode():
+            return torch.softmax(m.model(x), 1).cpu().numpy()
+
+    probs = torch.from_numpy(sketch_probs([frame])[0])
     p, idx = probs.topk(min(top, len(m.labels)))
-    return jsonify({"guesses": [{"label": m.labels[i], "prob": round(float(v) * 100, 1)}
-                                for v, i in zip(p.tolist(), idx.tolist())]})
+    out = {"guesses": [{"label": m.labels[i], "prob": round(float(v) * 100, 1)}
+                       for v, i in zip(p.tolist(), idx.tolist())]}
+
+    # Несколько символов рядом («65», «2+2»): каждый в сеть отдельно, читаем слева направо.
+    parts = sketch_segment.split(arr)
+    if parts:
+        each = sketch_probs([sketch_frame(part) for part in parts])
+        chosen, conf, sure = sketch_segment.read_sequence(list(each), m.labels, sketch_segment.ink_heights(parts))
+        symbols = []
+        for pr, c, s in zip(each, chosen, sure):
+            alt = sketch_segment.alternative(pr, c, m.labels)
+            symbols.append({"label": m.labels[c], "prob": round(s * 100, 1),
+                            "alt": {"label": m.labels[alt], "prob": round(float(pr[alt]) * 100, 1)}})
+        out.update(text=sketch_segment.join_labels([m.labels[c] for c in chosen]),
+                   confidence=round(conf * 100, 1), symbols=symbols)
+    return jsonify(out)
 
 # ── Тональность ──
 @app.route("/api/sentiment/analyze", methods=["POST"])
