@@ -3,3 +3,4 @@ pytest
 hypothesis
 ruff
 pyinstaller
+playwright

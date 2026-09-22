@@ -1,0 +1,51 @@
+# Проверки на каждый пуш.
+#
+# Веса моделей лежат в Git LFS, а бесплатный трафик LFS на GitHub - 1 ГБ в месяц на весь
+# репозиторий. Один прогон с весами - 207 МБ, то есть пять прогонов съели бы квоту и
+# клонировать репозиторий стало бы нечем. Поэтому LFS тянется один раз и дальше живёт в
+# кэше Actions, ключ - список хешей LFS-файлов: веса поменялись - кэш новый, иначе прежний.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Проверки
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Список весов
+        shell: bash
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Веса из кэша
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Веса из LFS (только если кэша нет)
+        run: git lfs pull
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      # С PyPI под Windows torch приходит сборкой для процессора - ровно то, что нужно:
+      # свои модели приложения работают на CPU, видеокарты на раннере нет.
+      - name: Зависимости
+        run: pip install -r requirements.txt pytest hypothesis
+
+      - name: 271 тест
+        run: python -m pytest tests -q
