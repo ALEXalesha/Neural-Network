@@ -9,7 +9,7 @@ from paths import lm_studio_url
 
 ROOT = Path(__file__).resolve().parents[1]
 
-hosts = st.sampled_from(["localhost", "LocalHost", "LOCALHOST", "127.0.0.1", "gitea.local", "lmstudio.local",
+hosts = st.sampled_from(["localhost", "LocalHost", "LOCALHOST", "127.0.0.1", "192.168.10.20", "lmstudio.local",
                          "localhost.example", "mylocalhost"])
 
 
