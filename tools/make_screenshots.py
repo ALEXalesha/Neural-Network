@@ -60,6 +60,12 @@ def start_server(port: int, data_dir: str) -> subprocess.Popen:
 
 def shot(page, name: str) -> None:
     path = OUT / name
+    # Окно без рамки рисует себя с отступом 8 px, скруглением и тенью: в настоящем
+    # прозрачном окне это поле не видно, а в кадре Chromium оно заливалось светлым
+    # фоном страницы, и на GitHub вокруг окна стояла светлая рамка. Снимаем так,
+    # как окно выглядит развёрнутым (html[data-max='1']): без отступа и тени.
+    page.evaluate("document.documentElement.dataset.max = '1'")
+    page.wait_for_timeout(150)
     page.screenshot(path=str(path))
     print(f"  {name} ({path.stat().st_size // 1024} КБ)")
 
