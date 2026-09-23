@@ -38,9 +38,12 @@ button,input,textarea,select{font-family:inherit}
 .big-ic.good{color:var(--green)}.big-ic.bad{color:var(--red)}.big-ic.warn{color:var(--yellow)}
 
 /* ══ Окно ══ */
-#app-root{position:absolute;inset:8px;border-radius:14px;overflow:hidden;background:var(--bg);
-  box-shadow:0 18px 60px var(--shadow),0 0 0 1px var(--border);display:flex;flex-direction:column;transition:inset .1s,border-radius .1s}
-html[data-max='1'] #app-root{inset:0;border-radius:0;box-shadow:none}
+/* Окно во всю площадь: прежде вокруг было прозрачное поле 8 px под тень, и на рабочем
+   столе оно читалось как вторая, прозрачная рамка вокруг окна. Зоны ресайза (.rz) лежат
+   поверх страницы у самого края и в поле не нуждаются. */
+#app-root{position:absolute;inset:0;border-radius:10px;overflow:hidden;background:var(--bg);
+  border:1px solid var(--border);display:flex;flex-direction:column;transition:border-radius .1s}
+html[data-max='1'] #app-root{border-radius:0;border:none}
 .rz{position:absolute;z-index:9998;background:transparent}
 .rz-n{top:0;left:12px;right:12px;height:5px;cursor:n-resize}
 .rz-s{bottom:0;left:12px;right:12px;height:5px;cursor:s-resize}
