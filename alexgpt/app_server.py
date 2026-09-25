@@ -20,7 +20,7 @@ from werkzeug.exceptions import HTTPException
 from paths import APP_DIR, DATA_DIR, FROZEN, MODELS_DIR as MODELS, lm_config_path, lm_studio_url, script_cmd
 import sketch_segment
 
-VERSION = "1.3.1"
+VERSION = "1.4.0"
 
 warnings.filterwarnings("ignore")
 if hasattr(sys.stdout, "reconfigure"):

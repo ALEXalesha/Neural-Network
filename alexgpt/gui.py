@@ -16,6 +16,7 @@ from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineS
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu, QSystemTrayIcon
 
+import window_geometry
 from paths import APP_DIR, DATA_DIR, FROZEN
 
 WIN_CMD = DATA_DIR / ".win_cmd"
@@ -40,6 +41,39 @@ def loader_query(data_dir: Path = DATA_DIR) -> dict:
         if isinstance(v, str) and v.isascii() and v.isalpha() and len(v) <= 20:
             query[key] = v
     return query
+
+
+def load_window(data_dir: Path = DATA_DIR):
+    """Место и размер окна с прошлого раза (строка window_geometry) или None."""
+    try:
+        value = json.loads((data_dir / "window.json").read_text(encoding="utf-8")).get("window")
+    except (OSError, UnicodeDecodeError, ValueError, AttributeError, RecursionError):
+        return None
+    return value if isinstance(value, str) and value else None
+
+
+def save_window(win, data_dir: Path = DATA_DIR) -> None:
+    """Отдельный window.json, а не ui.json: тот пишет сервер (тема и акцент), и два
+    писателя одного файла стирали бы друг другу ключи. Запись через временный файл."""
+    path = data_dir / "window.json"
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"window": window_geometry.encode(win)}), encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError:
+        pass  # не запомнили - не беда, работать это не мешает
+
+
+def place_window(win, screen, data_dir: Path = DATA_DIR) -> bool:
+    """Окно туда и такого размера, где его закрыли (1.4.0); нет сохранённого, оно испорчено
+    или заголовок не попал бы ни на один экран - по центру основного экрана, как раньше."""
+    if window_geometry.restore(win, load_window(data_dir)):
+        return True
+    if screen:
+        geo = screen.availableGeometry()
+        win.move(geo.x() + (geo.width() - win.width()) // 2, geo.y() + (geo.height() - win.height()) // 2)
+    return False
 
 
 def make_icon(size: int = 48) -> QIcon:
@@ -311,6 +345,9 @@ def main():
     instance.newConnection.connect(lambda: (instance.nextPendingConnection(), win.show_from_tray()))
 
     def on_quit():
+        # Окно закрывается только через выход (крестик тоже ведёт сюда), поэтому место
+        # запоминается здесь, а не в closeEvent.
+        save_window(win)
         try:
             urllib.request.urlopen(urllib.request.Request(
                 f"http://127.0.0.1:{port}/api/unload", method="POST", data=b"{}",
@@ -326,9 +363,6 @@ def main():
 
     app.aboutToQuit.connect(on_quit)
 
-    scr = app.primaryScreen()
-    if scr:
-        geo = scr.availableGeometry()
-        win.move(geo.x() + (geo.width() - win.width()) // 2, geo.y() + (geo.height() - win.height()) // 2)
+    place_window(win, app.primaryScreen())
     win.show(); win.activateWindow(); win.raise_()
     app.exec()

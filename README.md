@@ -116,13 +116,15 @@ The model weights in `models/` (207 MB) are stored with Git LFS. GitHub's free L
 
 Put your own `lm_config.json` in the data folder so updates do not overwrite it: `.appdata/` when running from source, `%LOCALAPPDATA%\AlexGPT` for the installed app, `data/` for portable.
 
+The window opens where it was closed and at the same size (`window.json` in the same data folder); if that monitor is gone, it opens in the middle of the main screen.
+
 ## Tests
 
 ```bash
 .venv\Scripts\python -m pytest tests
 ```
 
-271 tests, about 40 seconds. Most of them check invariants over hundreds of random inputs with hypothesis rather than hand-picked examples: the server never answers 500, JSON is always valid, probabilities always add up to 100 %, deleting a model never reaches outside the LM Studio folder, parsing a model's answer never breaks on any text. `HYPOTHESIS_PROFILE=thorough` raises it to 1000 examples per test.
+283 tests, about 40 seconds. Most of them check invariants over hundreds of random inputs with hypothesis rather than hand-picked examples: the server never answers 500, JSON is always valid, probabilities always add up to 100 %, deleting a model never reaches outside the LM Studio folder, parsing a model's answer never breaks on any text. `HYPOTHESIS_PROFILE=thorough` raises it to 1000 examples per test.
 
 Two files do something different:
 

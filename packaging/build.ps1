@@ -27,7 +27,9 @@ Copy-Item dist\AlexGPT\* $portable -Recurse
 Set-Content "$portable\portable.txt" "Portable mode: settings, chats and logs are stored in the data folder next to AlexGPT.exe" -Encoding ascii
 $zip = "dist\AlexGPT-$version-portable.zip"
 Remove-Item $zip -ErrorAction SilentlyContinue
-tar.exe -a -cf $zip -C dist\portable AlexGPT
+# Windows tar (bsdtar) by full path: from Git Bash PATH finds GNU tar first, which ignores -a
+# and writes a plain tar under the .zip name (1.4.0 build caught it: 1.1 GB, not a zip).
+& "$env:SystemRoot\System32\tar.exe" -a -cf $zip -C dist\portable AlexGPT
 if ($LASTEXITCODE) { throw "zip failed" }
 # The staging copy is only needed for the zip; it duplicates dist\AlexGPT (~1.2 GB)
 Remove-Item dist\portable -Recurse -Force
